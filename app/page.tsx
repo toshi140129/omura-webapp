@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import ResultsTable from "@/components/ResultsTable";
 import PredictionCheck from "@/components/PredictionCheck";
 import MartingaleCalc from "@/components/MartingaleCalc";
+import StatsAnalysis from "@/components/StatsAnalysis";
+import SeasonalAnalysis from "@/components/SeasonalAnalysis";
+import ExtraConditions from "@/components/ExtraConditions";
 
 export const revalidate = 3600;
 
@@ -42,6 +45,9 @@ export default async function Home() {
       <Suspense fallback={<div>読み込み中...</div>}>
         <PredictionCheck data={data} />
         <MartingaleCalc />
+        <StatsAnalysis data={data} />
+        <SeasonalAnalysis data={data} />
+        <ExtraConditions data={data} />
         <ResultsTable data={data} />
       </Suspense>
     </main>
