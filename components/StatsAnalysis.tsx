@@ -102,7 +102,46 @@ function calcStats(data: RaceRow[]): Stats {
     };
   });
 
-  return { total, cond1Days, cond1Rate: total ? Math.round((cond1Days / total) * 100) : 0, cond3GivenCond1, cond4GivenCond1, combTable };
+  // ①②成立時の条件付き確率
+  const c12 = data.filter((r) => {
+    const c1 = r.r11.p1 === "1";
+    const c2 = !(r.r10.p1 === r.r11.p1 && r.r10.p2 === r.r11.p2 && r.r10.p3 === r.r11.p3);
+    return c1 && c2;
+  });
+  const condTable12 = [
+    {
+      label: "③も来る（12R 1着=1号艇）",
+      count: c12.filter((r) => r.r12.p1 === "1").length,
+    },
+    {
+      label: "④も来る（2・3着に共通艇）",
+      count: c12.filter((r) => [r.r11.p2, r.r11.p3].some((b) => [r.r12.p2, r.r12.p3].includes(b))).length,
+    },
+    {
+      label: "③④両方来る",
+      count: c12.filter((r) => {
+        const c3 = r.r12.p1 === "1";
+        const c4 = [r.r11.p2, r.r11.p3].some((b) => [r.r12.p2, r.r12.p3].includes(b));
+        return c3 && c4;
+      }).length,
+    },
+    {
+      label: "③④⑤全部来る（的中）",
+      count: c12.filter((r) => {
+        const c3 = r.r12.p1 === "1";
+        const c4 = [r.r11.p2, r.r11.p3].some((b) => [r.r12.p2, r.r12.p3].includes(b));
+        const c5 = parseInt(r.r12.pay || "0") > 0 && parseInt(r.r12.pay || "0") < 4000;
+        return c3 && c4 && c5;
+      }).length,
+    },
+  ].map(({ label, count }) => ({
+    label,
+    count,
+    total: c12.length,
+    rate: c12.length ? Math.round((count / c12.length) * 100) : 0,
+  }));
+
+  return { total, cond1Days, cond1Rate: total ? Math.round((cond1Days / total) * 100) : 0, cond3GivenCond1, cond4GivenCond1, combTable, c12total: c12.length, condTable12 };
 }
 
 export default function StatsAnalysis({ data }: { data: RaceRow[] }) {
@@ -116,6 +155,19 @@ export default function StatsAnalysis({ data }: { data: RaceRow[] }) {
         <Stat label="①→③確率" value={`${s.cond3GivenCond1}%`} />
         <Stat label="①→④確率" value={`${s.cond4GivenCond1}%`} />
       </div>
+      <h3 className="text-sm font-bold text-gray-400 mb-2">①②成立時の条件付き確率</h3>
+      <div className="text-xs text-gray-400 mb-1">①②成立日数：{s.c12total}日</div>
+      <div className="space-y-1 mb-4">
+        {s.condTable12.map((row) => (
+          <div key={row.label} className="flex justify-between text-xs bg-gray-800 rounded p-2">
+            <span className="text-gray-300">{row.label}</span>
+            <span className={`font-bold ${row.rate >= 50 ? "text-yellow-400" : "text-white"}`}>
+              {row.rate}% ({row.count}/{row.total}日)
+            </span>
+          </div>
+        ))}
+      </div>
+
       <h3 className="text-sm font-bold text-gray-400 mb-2">条件組み合わせ別的中率</h3>
       <table className="w-full text-xs text-center">
         <thead>
