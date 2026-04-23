@@ -8,6 +8,8 @@ type Stats = {
   cond3GivenCond1: number;
   cond4GivenCond1: number;
   combTable: { label: string; hit: number; total: number; rate: number }[];
+  c12total: number;
+  condTable12: { label: string; count: number; total: number; rate: number }[];
 };
 
 function calcStats(data: RaceRow[]): Stats {
