@@ -5,14 +5,15 @@ import StatsAnalysis from "@/components/StatsAnalysis";
 import SeasonalAnalysis from "@/components/SeasonalAnalysis";
 import ExtraConditions from "@/components/ExtraConditions";
 import NextDayTrend from "@/components/NextDayTrend";
+import PopularityTrend from "@/components/PopularityTrend";
 
 export const revalidate = 3600;
 
 export type RaceRow = {
   date: string;
-  r10: { p1: string; p2: string; p3: string; pay: string };
-  r11: { p1: string; p2: string; p3: string; pay: string };
-  r12: { p1: string; p2: string; p3: string; pay: string };
+  r10: { p1: string; p2: string; p3: string; pay: string; rank: string };
+  r11: { p1: string; p2: string; p3: string; pay: string; rank: string };
+  r12: { p1: string; p2: string; p3: string; pay: string; rank: string };
 };
 
 async function fetchCSV(): Promise<RaceRow[]> {
@@ -32,9 +33,9 @@ async function fetchCSV(): Promise<RaceRow[]> {
         const cols = line.split(",");
         return {
           date: cols[0],
-          r10: { p1: cols[1], p2: cols[2], p3: cols[3], pay: cols[4] },
-          r11: { p1: cols[5], p2: cols[6], p3: cols[7], pay: cols[8] },
-          r12: { p1: cols[9], p2: cols[10], p3: cols[11], pay: cols[12] },
+          r10: { p1: cols[1], p2: cols[2], p3: cols[3], pay: cols[4], rank: cols[13] ?? "" },
+          r11: { p1: cols[5], p2: cols[6], p3: cols[7], pay: cols[8], rank: cols[14] ?? "" },
+          r12: { p1: cols[9], p2: cols[10], p3: cols[11], pay: cols[12], rank: cols[15] ?? "" },
         };
       })
       .reverse();
@@ -74,6 +75,7 @@ export default async function Home() {
       <SeasonalAnalysis data={data} />
       <ExtraConditions data={data} />
       <NextDayTrend data={data} />
+      <PopularityTrend data={data} />
       <ResultsTable data={data} />
     </main>
   );
