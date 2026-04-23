@@ -4,6 +4,7 @@ import MartingaleCalc from "@/components/MartingaleCalc";
 import StatsAnalysis from "@/components/StatsAnalysis";
 import SeasonalAnalysis from "@/components/SeasonalAnalysis";
 import ExtraConditions from "@/components/ExtraConditions";
+import NextDayTrend from "@/components/NextDayTrend";
 
 export const revalidate = 3600;
 
@@ -72,6 +73,7 @@ export default async function Home() {
       <StatsAnalysis data={data} />
       <SeasonalAnalysis data={data} />
       <ExtraConditions data={data} />
+      <NextDayTrend data={data} />
       <ResultsTable data={data} />
     </main>
   );
