@@ -31,6 +31,9 @@ const DIRS: Bucket[] = [
 
 const MIN_SAMPLES = 10;
 const TOP_N = 20;
+const BET_POINTS = 4; // 3連単人気上位4点買い
+const BET_PER_POINT = 100; // 1点あたり100円
+const BET_PER_DAY = BET_POINTS * BET_PER_POINT; // 1日あたり400円
 
 type Combo = {
   pop: number;
@@ -42,6 +45,7 @@ type Combo = {
   hitRate: number;
   avgPayoutOnHit: number;
   returnRate: number;
+  profitPerDay: number;
 };
 
 function parseIntOrNull(raw: string): number | null {
@@ -80,14 +84,20 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
             });
             if (matched.length < MIN_SAMPLES) continue;
 
-            const hits = matched.filter((r) => r.r12.p1 === "1");
+            // 3連単人気上位4点買い: 当選組み合わせの人気ランクが4以内なら的中
+            const hits = matched.filter((r) => {
+              const rank = parseIntOrNull(r.r12.rank);
+              return rank !== null && rank >= 1 && rank <= BET_POINTS;
+            });
             const payoutSum = hits.reduce(
               (s, r) => s + (parseIntOrNull(r.r12.pay) ?? 0),
               0
             );
             const hitRate = (hits.length / matched.length) * 100;
             const avgPayoutOnHit = hits.length ? payoutSum / hits.length : 0;
-            const returnRate = (payoutSum / (matched.length * 100)) * 100;
+            const totalCost = matched.length * BET_PER_DAY;
+            const returnRate = (payoutSum / totalCost) * 100;
+            const profitPerDay = (payoutSum - totalCost) / matched.length;
 
             out.push({
               pop,
@@ -99,6 +109,7 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
               hitRate: Math.round(hitRate * 10) / 10,
               avgPayoutOnHit: Math.round(avgPayoutOnHit),
               returnRate: Math.round(returnRate * 10) / 10,
+              profitPerDay: Math.round(profitPerDay),
             });
           }
         }
@@ -139,7 +150,10 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
         11R決着人気(1-4番) × 12R風速 × 12R波高 × 12R風向 の全組み合わせから、
         サンプル数 {MIN_SAMPLES} 件以上のみを対象に上位 {TOP_N} 件を表示。
         <br />
-        ※的中=12R 1着が1号艇。回収率=全該当日に100円ずつ賭けた想定のROI（100%超で期待値プラス）。
+        ※戦略: 該当日に12Rの3連単人気上位{BET_POINTS}点を各100円で購入
+        （1日あたり{BET_PER_DAY}円）。
+        的中=当選組が人気{BET_POINTS}番以内。
+        回収率={BET_PER_DAY}円/日に対する払戻の比率（100%超で期待値プラス）。
       </p>
 
       <div className="flex flex-wrap gap-1 mb-3">
@@ -182,6 +196,7 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
                 <th className="py-1 px-1 text-right">的中率</th>
                 <th className="py-1 px-1 text-right">平均払戻</th>
                 <th className="py-1 px-1 text-right">回収率</th>
+                <th className="py-1 px-1 text-right">損益/日</th>
               </tr>
             </thead>
             <tbody>
@@ -238,6 +253,20 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
                         }`}
                       >
                         {c.returnRate}%
+                      </span>
+                    </td>
+                    <td className="py-1 px-1 text-right">
+                      <span
+                        className={`font-bold ${
+                          c.profitPerDay > 0
+                            ? "text-green-400"
+                            : c.profitPerDay < 0
+                            ? "text-red-400"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {c.profitPerDay > 0 ? "+" : ""}
+                        {c.profitPerDay.toLocaleString()}
                       </span>
                     </td>
                   </tr>
