@@ -7,6 +7,7 @@ import ExtraConditions from "@/components/ExtraConditions";
 import NextDayTrend from "@/components/NextDayTrend";
 import PopularityTrend from "@/components/PopularityTrend";
 import WeatherTrend from "@/components/WeatherTrend";
+import ComboRanking from "@/components/ComboRanking";
 
 export const revalidate = 3600;
 
@@ -101,6 +102,7 @@ export default async function Home() {
       <NextDayTrend data={data} />
       <PopularityTrend data={data} />
       <WeatherTrend data={data} />
+      <ComboRanking data={data} />
       <ResultsTable data={data} />
     </main>
   );
