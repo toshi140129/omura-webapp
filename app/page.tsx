@@ -8,6 +8,7 @@ import NextDayTrend from "@/components/NextDayTrend";
 import PopularityTrend from "@/components/PopularityTrend";
 import WeatherTrend from "@/components/WeatherTrend";
 import ComboRanking from "@/components/ComboRanking";
+import RealtimeEV from "@/components/RealtimeEV";
 
 export const revalidate = 3600;
 
@@ -98,6 +99,7 @@ export default async function Home() {
       <h1 className="text-xl font-bold text-center mb-6 text-yellow-400">
         大村ボートレース 予測システム
       </h1>
+      <RealtimeEV />
       <PredictionCheck data={data} />
       <MartingaleCalc />
       <StatsAnalysis data={data} />
