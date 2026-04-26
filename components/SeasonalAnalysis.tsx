@@ -57,6 +57,28 @@ export default function SeasonalAnalysis({ data }: { data: RaceRow[] }) {
   });
   const payTotal = Object.values(payDist).reduce((a, b) => a + b, 0);
 
+  const seriesDayBuckets = ["1", "2", "3", "4", "5", "6", "7"];
+  const seriesDayLabels: Record<string, string> = {
+    "1": "1日目", "2": "2日目", "3": "3日目", "4": "4日目",
+    "5": "5日目", "6": "6日目", "7": "7日目",
+  };
+  const seriesDayStats = seriesDayBuckets
+    .map((b) => {
+      const rows = data.filter((r) => r.seriesDay === b);
+      const hits = rows.filter(isHit);
+      return { label: seriesDayLabels[b], total: rows.length, hit: hits.length, rate: rate(hits.length, rows.length) };
+    })
+    .filter((s) => s.total > 0);
+
+  const eventTypes = ["デイ", "ナイター", "ミッドナイト"];
+  const eventTypeStats = eventTypes
+    .map((t) => {
+      const rows = data.filter((r) => r.eventType === t);
+      const hits = rows.filter(isHit);
+      return { label: t, total: rows.length, hit: hits.length, rate: rate(hits.length, rows.length) };
+    })
+    .filter((s) => s.total > 0);
+
   return (
     <div className="mb-6 rounded-lg border border-gray-700 p-4">
       <h2 className="font-bold mb-3 text-lg">季節・時期別分析</h2>
@@ -94,7 +116,7 @@ export default function SeasonalAnalysis({ data }: { data: RaceRow[] }) {
       </div>
 
       <h3 className="text-sm font-bold text-gray-400 mb-2">12R払戻分布</h3>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2 mb-4">
         {Object.entries(payDist).map(([label, count]) => (
           <div key={label} className="bg-gray-800 rounded p-2 text-xs text-center">
             <div className="text-gray-400">{label}</div>
@@ -103,6 +125,36 @@ export default function SeasonalAnalysis({ data }: { data: RaceRow[] }) {
           </div>
         ))}
       </div>
+
+      <h3 className="text-sm font-bold text-gray-400 mb-2">節内開催日数別的中率</h3>
+      {seriesDayStats.length === 0 ? (
+        <div className="text-xs text-gray-500 mb-4">データなし</div>
+      ) : (
+        <div className={`grid gap-1 mb-4 ${seriesDayStats.length >= 7 ? "grid-cols-7" : "grid-cols-6"}`}>
+          {seriesDayStats.map((s) => (
+            <div key={s.label} className="bg-gray-800 rounded p-1 text-xs text-center">
+              <div className="text-gray-400">{s.label}</div>
+              <div className={`font-bold ${s.rate >= 50 ? "text-yellow-400" : ""}`}>{s.rate}%</div>
+              <div className="text-gray-500">{s.hit}/{s.total}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <h3 className="text-sm font-bold text-gray-400 mb-2">開催種別別的中率</h3>
+      {eventTypeStats.length === 0 ? (
+        <div className="text-xs text-gray-500">データなし</div>
+      ) : (
+        <div className={`grid gap-2 ${eventTypeStats.length === 1 ? "grid-cols-1" : eventTypeStats.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+          {eventTypeStats.map((s) => (
+            <div key={s.label} className="bg-gray-800 rounded p-2 text-xs text-center">
+              <div className="text-gray-400">{s.label}</div>
+              <div className={`font-bold text-lg ${s.rate >= 50 ? "text-yellow-400" : ""}`}>{s.rate}%</div>
+              <div className="text-gray-500">{s.hit}/{s.total}日</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

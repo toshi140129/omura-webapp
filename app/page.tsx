@@ -27,6 +27,8 @@ export type RaceRow = {
   r10: RaceData;
   r11: RaceData;
   r12: RaceData;
+  seriesDay: string;
+  eventType: string;
 };
 
 async function fetchCSV(): Promise<RaceRow[]> {
@@ -61,6 +63,8 @@ async function fetchCSV(): Promise<RaceRow[]> {
             rank: cols[15] ?? "",
             wind: cols[22] ?? "", wdir: cols[23] ?? "", wave: cols[24] ?? "",
           },
+          seriesDay: (cols[25] ?? "").trim(),
+          eventType: (cols[26] ?? "").trim(),
         };
       })
       .reverse();
