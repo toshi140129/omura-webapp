@@ -11,7 +11,14 @@ type RealtimePayload = {
   date: string;
   fetched_at: string;
   r11: { p1: string; p2: string; p3: string; pay: string };
-  r12_weather: { wind: string; wdir: string; wave: string };
+  r12_weather: {
+    wind: string;
+    wdir: string;
+    wave: string;
+    weather?: string;
+    air_temp?: string;
+    water_temp?: string;
+  };
   series_day: string;
   event_type: string;
   matched_samples: number;
@@ -41,6 +48,7 @@ function todayJST(): string {
 const FILTER_LABELS: Record<string, string> = {
   r11_p1: "11R1着",
   event_type: "開催",
+  weather: "天気",
   wind_b: "風速",
   wave_b: "波高",
   series_day: "節日数",
@@ -92,7 +100,15 @@ export default async function RealtimeEV() {
           <span className="text-gray-500"> 払戻 {data.r11.pay}円</span>
         </div>
         <div>
-          <span className="text-gray-500">12R気象:</span> 風 {data.r12_weather.wind}m / 波 {data.r12_weather.wave}cm / 風向 {data.r12_weather.wdir}
+          <span className="text-gray-500">12R天気:</span>{" "}
+          <span className="font-bold text-white">
+            {data.r12_weather.weather ?? "?"}
+          </span>
+          <span className="text-gray-500">
+            {" "}/ 風 {data.r12_weather.wind}m / 波 {data.r12_weather.wave}cm / 風向 {data.r12_weather.wdir}
+            {data.r12_weather.air_temp ? ` / 気温 ${data.r12_weather.air_temp}℃` : ""}
+            {data.r12_weather.water_temp ? ` / 水温 ${data.r12_weather.water_temp}℃` : ""}
+          </span>
         </div>
         <div>
           <span className="text-gray-500">開催:</span> {data.event_type} {data.series_day}日目 / 類似サンプル {data.matched_samples}日
