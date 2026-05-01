@@ -15,6 +15,7 @@ export default function ResultsTable({ data }: { data: RaceRow[] }) {
               <th className="py-2 px-1">払戻</th>
               <th className="py-2 px-1">12R</th>
               <th className="py-2 px-1">払戻</th>
+              <th className="py-2 px-1">天気</th>
             </tr>
           </thead>
           <tbody>
@@ -48,6 +49,7 @@ export default function ResultsTable({ data }: { data: RaceRow[] }) {
                     {row.r12.p1}-{row.r12.p2}-{row.r12.p3}
                   </td>
                   <td className="py-2 px-1 text-yellow-400">{row.r12.pay}</td>
+                  <td className="py-2 px-1 text-gray-300">{row.weather || "-"}</td>
                 </tr>
               );
             })}

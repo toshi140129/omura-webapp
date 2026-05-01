@@ -41,6 +41,8 @@ const DIR_BUCKETS: Bucket<number>[] = [
   { label: "西(W)", match: (n) => n >= 11 && n <= 14 },
 ];
 
+const WEATHER_LABELS = ["晴", "曇り", "雨", "雪"] as const;
+
 const BOATS = ["1", "2", "3", "4", "5", "6"] as const;
 
 const RANK_BUCKETS = [
@@ -113,6 +115,47 @@ function aggregate<T>(
   });
 }
 
+function aggregateByWeather(
+  data: RaceRow[],
+  race: RaceKey,
+  dim: Dimension
+): Row[] {
+  return WEATHER_LABELS.map((label) => {
+    const matched = data.filter((r) => r.weather === label).map((r) => r[race]);
+    let dist: { key: string; count: number; rate: number }[];
+    if (dim === "boat") {
+      dist = BOATS.map((boat) => {
+        const c = matched.filter((r) => r.p1 === boat).length;
+        return {
+          key: boat,
+          count: c,
+          rate: matched.length ? Math.round((c / matched.length) * 100) : 0,
+        };
+      });
+    } else {
+      dist = RANK_BUCKETS.map((rb) => {
+        const c = matched.filter((r) => {
+          const rk = parseIntOrNull(r.rank);
+          return rk !== null && rb.match(rk);
+        }).length;
+        return {
+          key: rb.label,
+          count: c,
+          rate: matched.length ? Math.round((c / matched.length) * 100) : 0,
+        };
+      });
+    }
+    const top = [...dist].sort((a, b) => b.count - a.count)[0];
+    return {
+      label,
+      total: matched.length,
+      dist,
+      topKey: top && top.count > 0 ? top.key : null,
+      topRate: top?.rate ?? 0,
+    };
+  });
+}
+
 export default function WeatherTrend({ data }: { data: RaceRow[] }) {
   const [race, setRace] = useState<RaceKey>("r12");
   const [dim, setDim] = useState<Dimension>("boat");
@@ -135,6 +178,10 @@ export default function WeatherTrend({ data }: { data: RaceRow[] }) {
   const dirRows = useMemo(
     () => aggregate(rows, (r) => parseIntOrNull(r.wdir), DIR_BUCKETS, dim),
     [rows, dim]
+  );
+  const weatherRows = useMemo(
+    () => aggregateByWeather(data, race, dim),
+    [data, race, dim]
   );
 
   if (!hasWeather) {
@@ -203,6 +250,7 @@ export default function WeatherTrend({ data }: { data: RaceRow[] }) {
       <Section title="風速別" rows={windRows} gridCols={gridCols} />
       <Section title="波高別" rows={waveRows} gridCols={gridCols} />
       <Section title="風向別" rows={dirRows} gridCols={gridCols} />
+      <Section title="天気別" rows={weatherRows} gridCols={gridCols} />
     </div>
   );
 }
