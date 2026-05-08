@@ -16,6 +16,7 @@ const BUCKETS: Bucket[] = [
 ];
 
 const PIVOT_RANKS = [1, 2, 3, 4];
+const PIVOT_BOATS = [5, 6];
 const YEARS = ["all", "2023", "2024", "2025", "2026"] as const;
 type YearFilter = (typeof YEARS)[number];
 
@@ -82,6 +83,33 @@ export default function PopularityTrend({ data }: { data: RaceRow[] }) {
     [filtered]
   );
 
+  const boatStats = useMemo(
+    () =>
+      PIVOT_BOATS.map((boat) => {
+        const matches = filtered.filter(
+          (r) => parseInt(r.r11.p1, 10) === boat
+        );
+        const r12Boats = matches
+          .map((r) => parseInt(r.r12.p1, 10))
+          .filter((n) => n >= 1 && n <= 6);
+
+        const boatCounts = [1, 2, 3, 4, 5, 6].map((b) => {
+          const count = r12Boats.filter((n) => n === b).length;
+          const rate = r12Boats.length
+            ? Math.round((count / r12Boats.length) * 100)
+            : 0;
+          return { label: `${b}号艇`, boat: b, count, rate };
+        });
+
+        const top = [...boatCounts].sort((a, b) => b.count - a.count)[0];
+        const topLabel = top && top.count > 0 ? top.label : null;
+        const topRate = top?.rate ?? 0;
+
+        return { boat, total: matches.length, validTotal: r12Boats.length, boatCounts, topLabel, topRate };
+      }),
+    [filtered]
+  );
+
   if (!hasRankData) {
     return (
       <div className="mb-6 rounded-lg border border-gray-700 p-4">
@@ -131,46 +159,94 @@ export default function PopularityTrend({ data }: { data: RaceRow[] }) {
           選択年のデータがありません
         </div>
       ) : (
-        stats.map((s) => (
-          <div key={s.pivot} className="mb-4">
-            <div className="flex items-center justify-between mb-2 border-l-4 border-yellow-400 pl-2">
-              <h3 className="text-sm font-bold text-yellow-400">
-                11R 決着 = {s.pivot}番人気
-                <span className="text-gray-400 text-xs ml-2 font-normal">
-                  （{s.validTotal}日分）
-                </span>
-              </h3>
-              {s.topLabel && (
-                <span className="text-yellow-300 text-xs font-bold">
-                  最頻: {s.topLabel} ({s.topRate}%)
-                </span>
+        <>
+          {stats.map((s) => (
+            <div key={s.pivot} className="mb-4">
+              <div className="flex items-center justify-between mb-2 border-l-4 border-yellow-400 pl-2">
+                <h3 className="text-sm font-bold text-yellow-400">
+                  11R 決着 = {s.pivot}番人気
+                  <span className="text-gray-400 text-xs ml-2 font-normal">
+                    （{s.validTotal}日分）
+                  </span>
+                </h3>
+                {s.topLabel && (
+                  <span className="text-yellow-300 text-xs font-bold">
+                    最頻: {s.topLabel} ({s.topRate}%)
+                  </span>
+                )}
+              </div>
+              {s.validTotal === 0 ? (
+                <div className="text-xs text-gray-500 pl-2">該当日なし</div>
+              ) : (
+                <div className="grid grid-cols-4 gap-1 text-xs text-center">
+                  {s.bucketCounts.map((b) => {
+                    const isTop = b.label === s.topLabel && b.count > 0;
+                    return (
+                      <div
+                        key={b.label}
+                        className={`rounded p-1 ${
+                          isTop
+                            ? "bg-yellow-500 text-black font-bold"
+                            : "bg-gray-700 text-gray-200"
+                        }`}
+                      >
+                        <div className="font-bold">{b.label}</div>
+                        <div>{b.rate}%</div>
+                        <div className="text-[10px] opacity-75">{b.count}日</div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
-            {s.validTotal === 0 ? (
-              <div className="text-xs text-gray-500 pl-2">該当日なし</div>
-            ) : (
-              <div className="grid grid-cols-4 gap-1 text-xs text-center">
-                {s.bucketCounts.map((b) => {
-                  const isTop = b.label === s.topLabel && b.count > 0;
-                  return (
-                    <div
-                      key={b.label}
-                      className={`rounded p-1 ${
-                        isTop
-                          ? "bg-yellow-500 text-black font-bold"
-                          : "bg-gray-700 text-gray-200"
-                      }`}
-                    >
-                      <div className="font-bold">{b.label}</div>
-                      <div>{b.rate}%</div>
-                      <div className="text-[10px] opacity-75">{b.count}日</div>
-                    </div>
-                  );
-                })}
+          ))}
+
+          <div className="mt-4 pt-4 border-t border-gray-700">
+            <p className="text-xs text-gray-400 mb-3">
+              11Rで5号艇・6号艇が1着のとき、同日12Rで何号艇が1着に来たかを集計。
+            </p>
+            {boatStats.map((s) => (
+              <div key={s.boat} className="mb-4">
+                <div className="flex items-center justify-between mb-2 border-l-4 border-cyan-400 pl-2">
+                  <h3 className="text-sm font-bold text-cyan-400">
+                    11R 1着 = {s.boat}号艇
+                    <span className="text-gray-400 text-xs ml-2 font-normal">
+                      （{s.validTotal}日分）
+                    </span>
+                  </h3>
+                  {s.topLabel && (
+                    <span className="text-cyan-300 text-xs font-bold">
+                      最頻: {s.topLabel} ({s.topRate}%)
+                    </span>
+                  )}
+                </div>
+                {s.validTotal === 0 ? (
+                  <div className="text-xs text-gray-500 pl-2">該当日なし</div>
+                ) : (
+                  <div className="grid grid-cols-6 gap-1 text-xs text-center">
+                    {s.boatCounts.map((b) => {
+                      const isTop = b.label === s.topLabel && b.count > 0;
+                      return (
+                        <div
+                          key={b.boat}
+                          className={`rounded p-1 ${
+                            isTop
+                              ? "bg-cyan-500 text-black font-bold"
+                              : "bg-gray-700 text-gray-200"
+                          }`}
+                        >
+                          <div className="font-bold">{b.label}</div>
+                          <div>{b.rate}%</div>
+                          <div className="text-[10px] opacity-75">{b.count}日</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))
+        </>
       )}
     </div>
   );
