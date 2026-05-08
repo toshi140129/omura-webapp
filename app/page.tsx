@@ -7,6 +7,7 @@ import ExtraConditions from "@/components/ExtraConditions";
 import NextDayTrend from "@/components/NextDayTrend";
 import PopularityTrend from "@/components/PopularityTrend";
 import WeatherTrend from "@/components/WeatherTrend";
+import WeatherDetailTrend from "@/components/WeatherDetailTrend";
 import ComboRanking from "@/components/ComboRanking";
 import RealtimeEV from "@/components/RealtimeEV";
 
@@ -33,6 +34,8 @@ export type RaceRow = {
   weather: string;
   airTemp: string;
   waterTemp: string;
+  stabilizer: string;
+  tideLevel: string;
 };
 
 async function fetchCSV(): Promise<RaceRow[]> {
@@ -72,6 +75,8 @@ async function fetchCSV(): Promise<RaceRow[]> {
           weather: (cols[27] ?? "").trim(),
           airTemp: (cols[28] ?? "").trim(),
           waterTemp: (cols[29] ?? "").trim(),
+          stabilizer: (cols[30] ?? "").trim(),
+          tideLevel: (cols[31] ?? "").trim(),
         };
       })
       .reverse();
@@ -114,6 +119,7 @@ export default async function Home() {
       <NextDayTrend data={data} />
       <PopularityTrend data={data} />
       <WeatherTrend data={data} />
+      <WeatherDetailTrend data={data} />
       <ComboRanking data={data} />
       <ResultsTable data={data} />
     </main>
