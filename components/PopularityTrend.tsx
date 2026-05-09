@@ -15,7 +15,7 @@ const BUCKETS: Bucket[] = [
   { label: "31番〜", match: (n) => n >= 31 },
 ];
 
-const PIVOT_RANKS = [1, 2, 3, 4];
+const PIVOT_RANKS = [1, 2, 3, 4, 5];
 const PIVOT_BOATS = [5, 6];
 const YEARS = ["all", "2023", "2024", "2025", "2026"] as const;
 type YearFilter = (typeof YEARS)[number];
@@ -126,7 +126,7 @@ export default function PopularityTrend({ data }: { data: RaceRow[] }) {
     <div className="mb-6 rounded-lg border border-gray-700 p-4">
       <h2 className="font-bold mb-3 text-lg">同日12Rの人気順傾向（11R人気順別）</h2>
       <p className="text-xs text-gray-400 mb-3">
-        11Rが1〜4番人気で決着した日、同じ日の12Rで何番人気が1着に来たかを集計。
+        11Rが1〜5番人気で決着した日、同じ日の12Rで何番人気が1着に来たかを集計。
         <br />
         ※人気順はboatrace.jpの3連単払戻の「人気」列を使用。
       </p>

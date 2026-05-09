@@ -117,8 +117,8 @@ export default function WeatherDetailTrend({ data }: { data: RaceRow[] }) {
   ], [data]);
 
   const stabSections = useMemo<Section[]>(() => [
-    makeSection("安定板 使用なし(0艇)", boatDist(data, (r) => r.stabilizer === "0")),
-    makeSection("安定板 使用あり(1艇〜)", boatDist(data, (r) => { const v = parseInt2(r.stabilizer); return v !== null && v >= 1; })),
+    makeSection("安定板 不使用", boatDist(data, (r) => r.stabilizer === "0")),
+    makeSection("安定板 使用あり", boatDist(data, (r) => r.stabilizer === "1")),
   ], [data]);
 
   const tideSections = useMemo<Section[]>(() => {
@@ -169,7 +169,7 @@ export default function WeatherDetailTrend({ data }: { data: RaceRow[] }) {
           <SectionGrid sections={stabSections} accentColor="green" />
         ) : (
           <div className="text-xs text-gray-500 bg-gray-800 rounded p-2">
-            安定板データは現在収集中です。omura_tide_stabilizer_backfill.py 実行後に反映されます。
+            安定板データを取得中です。
           </div>
         )}
       </div>
@@ -182,7 +182,7 @@ export default function WeatherDetailTrend({ data }: { data: RaceRow[] }) {
           <SectionGrid sections={tideSections} accentColor="green" />
         ) : (
           <div className="text-xs text-gray-500 bg-gray-800 rounded p-2">
-            潮位データは現在収集中です。omura_tide_stabilizer_backfill.py 実行後に反映されます。
+            潮位データはboatrace.jpでは提供されていません。
           </div>
         )}
       </div>
