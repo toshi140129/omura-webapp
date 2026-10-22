@@ -112,8 +112,7 @@ export default function PopularityTrend({ data }: { data: RaceRow[] }) {
 
   if (!hasRankData) {
     return (
-      <div className="mb-6 rounded-lg border border-gray-700 p-4">
-        <h2 className="font-bold mb-3 text-lg">同日12Rの人気順傾向（11R人気順別）</h2>
+      <div>
         <div className="text-xs text-gray-400">
           人気順データがまだCSVに取り込まれていません。
           バックフィル完了後、再デプロイで反映されます。
@@ -123,8 +122,7 @@ export default function PopularityTrend({ data }: { data: RaceRow[] }) {
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">同日12Rの人気順傾向（11R人気順別）</h2>
+    <div>
       <p className="text-xs text-gray-400 mb-3">
         11Rが1〜5番人気で決着した日、同じ日の12Rで何番人気が1着に来たかを集計。
         <br />

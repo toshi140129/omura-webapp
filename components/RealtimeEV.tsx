@@ -60,14 +60,9 @@ export default async function RealtimeEV() {
 
   if (!data) {
     return (
-      <div className="mb-6 rounded-lg border border-gray-700 p-4">
-        <h2 className="font-bold text-lg mb-2 text-yellow-400">
-          本日のリアルタイム期待値
-        </h2>
-        <p className="text-xs text-gray-500">
-          11R終了後に自動更新されます。
-        </p>
-      </div>
+      <p className="text-sm text-gray-400">
+        まだ本日分のデータがありません。11R終了後に自動更新されます。
+      </p>
     );
   }
 
@@ -76,21 +71,21 @@ export default async function RealtimeEV() {
   const evList = data.patterns ?? [];
 
   return (
-    <div
-      className={`mb-6 rounded-lg border p-4 ${
-        isToday && evPlus.length > 0
-          ? "border-yellow-500 bg-yellow-900/10"
-          : "border-gray-700"
-      }`}
-    >
-      <h2 className="font-bold text-lg mb-2 text-yellow-400">
-        本日のリアルタイム期待値
-      </h2>
+    <div>
+      {isToday && evPlus.length > 0 && (
+        <div className="mb-3 rounded-lg bg-yellow-500 px-3 py-2 text-center text-sm font-bold text-black">
+          本日 EV+ の買い目が {evPlus.length} 点あります
+        </div>
+      )}
+      {!isToday && (
+        <div className="mb-3 rounded-lg bg-gray-800 px-3 py-2 text-center text-xs text-gray-400">
+          本日分は未更新です（表示は {data.date} のもの）
+        </div>
+      )}
 
-      <div className="text-xs text-gray-400 mb-3 space-y-0.5">
+      <div className="mb-3 space-y-1 rounded-lg bg-gray-800/60 p-3 text-xs text-gray-400">
         <div>
           <span className="text-gray-500">対象日:</span> {data.date}
-          {isToday ? "" : "（本日未更新）"}
         </div>
         <div>
           <span className="text-gray-500">11R結果:</span>{" "}
@@ -132,36 +127,35 @@ export default async function RealtimeEV() {
           類似条件のサンプルが不足しています
         </p>
       ) : (
-        <div className="space-y-1">
-          <div className="text-xs text-gray-400 mb-1">
-            ▼ 期待値TOP（黄=EV+ 100%以上）
+        <div className="space-y-1.5">
+          <div className="mb-1 text-xs text-gray-400">
+            期待値TOP10（黄＝EV 100%以上）
           </div>
           {evList.slice(0, 10).map((p) => {
             const evPlusFlag = p.ev >= 100;
             return (
               <div
                 key={p.pattern}
-                className={`rounded p-2 text-xs flex items-center justify-between gap-2 ${
-                  evPlusFlag ? "bg-yellow-900/30" : "bg-gray-800"
+                className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2 ${
+                  evPlusFlag
+                    ? "bg-yellow-900/30 ring-1 ring-yellow-700"
+                    : "bg-gray-800"
                 }`}
               >
-                <span className="font-bold tabular-nums">{p.pattern}</span>
-                <span
-                  className={`font-bold tabular-nums ${
+                <div>
+                  <div className="text-base font-bold tabular-nums">{p.pattern}</div>
+                  <div className="text-[11px] text-gray-400 tabular-nums">
+                    的中 {(p.prob * 100).toFixed(1)}% / 平均 {Math.round(p.avg_pay).toLocaleString()}円 / {p.hit}/{p.total}
+                  </div>
+                </div>
+                <div
+                  className={`text-right text-lg font-bold tabular-nums ${
                     evPlusFlag ? "text-yellow-400" : "text-gray-400"
                   }`}
                 >
-                  EV {Math.round(p.ev)}%
-                </span>
-                <span className="text-gray-400 tabular-nums">
-                  的中 {(p.prob * 100).toFixed(1)}%
-                </span>
-                <span className="text-gray-400 tabular-nums">
-                  平均 {Math.round(p.avg_pay)}円
-                </span>
-                <span className="text-gray-500 tabular-nums">
-                  {p.hit}/{p.total}
-                </span>
+                  {Math.round(p.ev)}%
+                  <div className="text-[10px] font-normal text-gray-500">EV</div>
+                </div>
               </div>
             );
           })}

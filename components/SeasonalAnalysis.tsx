@@ -80,8 +80,7 @@ export default function SeasonalAnalysis({ data }: { data: RaceRow[] }) {
     .filter((s) => s.total > 0);
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">季節・時期別分析</h2>
+    <div>
 
       <h3 className="text-sm font-bold text-gray-400 mb-2">季節別的中率</h3>
       <div className="grid grid-cols-2 gap-2 mb-4">

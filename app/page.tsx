@@ -10,6 +10,9 @@ import WeatherTrend from "@/components/WeatherTrend";
 import WeatherDetailTrend from "@/components/WeatherDetailTrend";
 import ComboRanking from "@/components/ComboRanking";
 import RealtimeEV from "@/components/RealtimeEV";
+import VerificationSummary from "@/components/VerificationSummary";
+import AppShell from "@/components/ui/AppShell";
+import Section from "@/components/ui/Section";
 
 export const revalidate = 3600;
 
@@ -105,23 +108,88 @@ export default async function Home() {
     );
   }
 
-  return (
-    <main className="min-h-screen bg-gray-900 text-white p-4 max-w-2xl mx-auto">
-      <h1 className="text-xl font-bold text-center mb-6 text-yellow-400">
-        大村ボートレース 予測システム
-      </h1>
-      <RealtimeEV />
-      <PredictionCheck data={data} />
-      <MartingaleCalc />
-      <StatsAnalysis data={data} />
-      <SeasonalAnalysis data={data} />
-      <ExtraConditions data={data} />
-      <NextDayTrend data={data} />
-      <PopularityTrend data={data} />
-      <WeatherTrend data={data} />
-      <WeatherDetailTrend data={data} />
-      <ComboRanking data={data} />
+  const latest = data[0];
+
+  const today = (
+    <>
+      <Section
+        id="realtime"
+        title="本日のリアルタイム期待値"
+        summary="11R終了後に自動更新。EV 100%以上は黄色"
+        defaultOpen
+        accent="yellow"
+      >
+        <RealtimeEV />
+      </Section>
+      <Section
+        id="check"
+        title="予測チェック"
+        summary={`最新データ日 ${latest.date} の5条件と買い目`}
+        defaultOpen
+        accent="yellow"
+      >
+        <PredictionCheck data={data} />
+      </Section>
+      <Section
+        id="martingale"
+        title="マーチンゲール計算"
+        summary="次回賭け金を2つの式で比較"
+        defaultOpen
+      >
+        <MartingaleCalc />
+      </Section>
+      <Section
+        id="verification"
+        title="資金配分の検証結果（要約）"
+        summary="2023-01〜2026-10 の収支検証。固定値"
+      >
+        <VerificationSummary />
+      </Section>
+    </>
+  );
+
+  const analysis = (
+    <>
+      <Section id="stats" title="確率分析" summary="5条件の成立率と組み合わせ別的中率" defaultOpen>
+        <StatsAnalysis data={data} />
+      </Section>
+      <Section id="seasonal" title="季節・時期別分析" summary="季節・月・曜日・節内日数・開催種別">
+        <SeasonalAnalysis data={data} />
+      </Section>
+      <Section id="extra" title="追加条件探索" summary="10R払戻帯・1号艇3連続・高配当条件">
+        <ExtraConditions data={data} />
+      </Section>
+      <Section id="nextday" title="同日12Rの1着傾向（11R勝者別）" summary="11Rの勝ち艇ごとの12R 1着分布">
+        <NextDayTrend data={data} />
+      </Section>
+      <Section id="popularity" title="同日12Rの人気順傾向（11R人気順別）" summary="11Rの決着人気ごとの12R人気分布">
+        <PopularityTrend data={data} />
+      </Section>
+      <Section id="weather" title="気象条件別の1着傾向" summary="風速・波高・風向・天気別">
+        <WeatherTrend data={data} />
+      </Section>
+      <Section id="weather-detail" title="気象詳細・潮汐別の12R 1着号艇傾向" summary="気温・水温・安定板・潮位別">
+        <WeatherDetailTrend data={data} />
+      </Section>
+      <Section id="combo" title="条件組合せランキング" summary="人気上位4点買いの条件別回収率">
+        <ComboRanking data={data} />
+      </Section>
+    </>
+  );
+
+  const history = (
+    <Section id="results" title="過去結果" summary={`${data.length}日分。①成立日・的中日で絞り込み可`} defaultOpen>
       <ResultsTable data={data} />
-    </main>
+    </Section>
+  );
+
+  return (
+    <AppShell
+      lastDate={latest.date}
+      totalDays={data.length}
+      today={today}
+      analysis={analysis}
+      history={history}
+    />
   );
 }

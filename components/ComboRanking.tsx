@@ -134,8 +134,7 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
 
   if (!hasWeatherAndRank) {
     return (
-      <div className="mb-6 rounded-lg border border-gray-700 p-4">
-        <h2 className="font-bold mb-3 text-lg">条件組合せランキング</h2>
+      <div>
         <div className="text-xs text-gray-400">
           人気・気象データがまだCSVに揃っていません。
         </div>
@@ -144,8 +143,7 @@ export default function ComboRanking({ data }: { data: RaceRow[] }) {
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">条件組合せランキング</h2>
+    <div>
       <p className="text-xs text-gray-400 mb-3">
         11R決着人気(1-4番) × 12R風速 × 12R波高 × 12R風向 の全組み合わせから、
         サンプル数 {MIN_SAMPLES} 件以上のみを対象に上位 {TOP_N} 件を表示。
