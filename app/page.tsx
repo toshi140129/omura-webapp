@@ -10,6 +10,7 @@ import WeatherTrend from "@/components/WeatherTrend";
 import WeatherDetailTrend from "@/components/WeatherDetailTrend";
 import ComboRanking from "@/components/ComboRanking";
 import RealtimeEV from "@/components/RealtimeEV";
+import TodaySigns from "@/components/TodaySigns";
 import VerificationSummary from "@/components/VerificationSummary";
 import AppShell from "@/components/ui/AppShell";
 import Section from "@/components/ui/Section";
@@ -112,6 +113,15 @@ export default async function Home() {
 
   const today = (
     <>
+      <Section
+        id="signs"
+        title="12R 見送りサイン"
+        summary="出走表と直前情報から、負けやすい日を3条件で判定"
+        defaultOpen
+        accent="yellow"
+      >
+        <TodaySigns />
+      </Section>
       <Section
         id="realtime"
         title="本日のリアルタイム期待値"
