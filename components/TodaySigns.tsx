@@ -1,10 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { RaceInfo } from "@/lib/boatrace";
-import type { SignResult, Verdict } from "@/lib/skipRules";
+import type { BoostResult, SignResult, Verdict } from "@/lib/skipRules";
 
 type Payload = RaceInfo & {
   signs: SignResult[];
+  boosts?: BoostResult[];
   verdict: Verdict;
   fetchedAt: string;
 };
@@ -82,6 +83,7 @@ export default function TodaySigns() {
         ? { cls: "bg-green-600 text-white", text: "見送り条件なし" }
         : { cls: "bg-gray-700 text-gray-100", text: "判定待ち（直前情報が出たら確定）" };
   const skipCount = data.signs.filter((s) => s.status === "skip").length;
+  const boosts = (data.boosts ?? []).filter((b) => b.active);
 
   return (
     <div>
@@ -94,6 +96,23 @@ export default function TodaySigns() {
         {data.date} 大村12R{data.raceType ? ` ${data.raceType}` : ""}
         {data.title ? ` / ${data.title}` : ""}
       </div>
+
+      {boosts.length > 0 && (
+        <div className="mb-3 space-y-1.5">
+          {boosts.map((b) => (
+            <div key={b.id} className="rounded-lg bg-emerald-900/40 px-3 py-2 ring-1 ring-emerald-600">
+              <div className="flex items-start gap-2">
+                <span className="text-base leading-6">💪</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-emerald-300">追い風: {b.label}</div>
+                  <div className="mt-0.5 text-xs text-gray-200">{b.detail}</div>
+                  <div className="text-[10px] text-gray-500">{b.evidence}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="space-y-1.5">
         {data.signs.map((s) => (
@@ -133,6 +152,7 @@ export default function TodaySigns() {
               <th className="py-1 text-left">枠</th>
               <th className="py-1 text-left">選手</th>
               <th className="py-1">級</th>
+              <th className="py-1">支部</th>
               <th className="py-1 text-right">全国</th>
               <th className="py-1 text-right">当地</th>
               <th className="py-1 text-right">平均ST</th>
@@ -145,6 +165,7 @@ export default function TodaySigns() {
                 <td className="py-1 font-bold">{b.waku}</td>
                 <td className="py-1">{b.name || "-"}</td>
                 <td className="py-1 text-center">{b.klass || "-"}</td>
+                <td className="py-1 text-center">{b.branch || "-"}</td>
                 <td className="py-1 text-right">{b.winRate?.toFixed(2) ?? "-"}</td>
                 <td className="py-1 text-right">{b.localWinRate?.toFixed(2) ?? "-"}</td>
                 <td className="py-1 text-right">{b.avgST?.toFixed(2) ?? "-"}</td>

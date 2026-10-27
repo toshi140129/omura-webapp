@@ -2,6 +2,7 @@
  * 12Rメイン理論の「見送りサイン」。
  * 追加データ分析（2026-10-22、①②成立549日・1万円固定）で、前半(2023-24)と後半(2025-26)の
  * 両方で同じ向きに出た条件だけを有効にしている。条件を足すときは SKIP_RULES に1件追加するだけでよい。
+ * 2026-10-27: 「曇り」を追加（1番人気1点・2万定額 322日の検証）。見送りとは別に「追い風サイン」（BOOST_RULES）も返す。
  */
 import type { RaceInfo } from "./boatrace";
 
@@ -88,6 +89,21 @@ export const SKIP_RULES: SkipRule[] = [
     },
   },
   {
+    id: "cloudy",
+    label: "12Rが曇り",
+    stage: "直前情報",
+    evidence: "該当101日: 1番人気的中9.9%・回収率63%（晴 20.9%・136%、2023〜26年すべて同じ向き）",
+    enabled: true,
+    evaluate: (info) => {
+      if (!info.weather || !info.weather.weather) {
+        return { status: "pending", detail: "直前情報（天候）待ち" };
+      }
+      const w = info.weather.weather;
+      const detail = `${w}${info.beforeInfoAvailable ? "" : " ※前のレース時点"}`;
+      return { status: w.includes("曇") ? "skip" : "ok", detail };
+    },
+  },
+  {
     id: "other_tilt",
     label: "1号艇以外にチルト0.5以上の艇がいる",
     stage: "直前情報",
@@ -155,6 +171,47 @@ export const SKIP_RULES: SkipRule[] = [
     },
   },
 ];
+
+/** 追い風サイン: 見送りではなく「この日の1号艇は強い」という後押し（2026-10-27 検証、1番人気1点・2万定額） */
+export type BoostResult = {
+  id: string;
+  label: string;
+  active: boolean;
+  detail: string;
+  evidence: string;
+};
+
+export const BOOST_RULES: { id: string; label: string; evidence: string; evaluate: (info: RaceInfo) => { active: boolean; detail: string } }[] = [
+  {
+    id: "local_branch",
+    label: "1号艇が地元・長崎支部",
+    evidence: "該当55日: 的中23.6%・回収率160%（それ以外 16.1%・103%、前半162%・後半158%）",
+    evaluate: (info) => {
+      const b1 = info.boats.find((b) => b.waku === "1");
+      if (!b1) return { active: false, detail: "出走表が未発表" };
+      if (!b1.branch) return { active: false, detail: "支部を読めず" };
+      return { active: b1.branch === "長崎", detail: `1号艇 ${b1.name} は${b1.branch}支部` };
+    },
+  },
+  {
+    id: "b_class",
+    label: "1号艇がB級（見送らない）",
+    evidence: "B1 20日: 的中30%・回収率228%（A1 241日は15%・98%）。的中は低いがオッズが高く、見送ると損",
+    evaluate: (info) => {
+      const b1 = info.boats.find((b) => b.waku === "1");
+      if (!b1) return { active: false, detail: "出走表が未発表" };
+      if (!b1.klass) return { active: false, detail: "級別を読めず" };
+      return { active: b1.klass.startsWith("B"), detail: `1号艇 ${b1.name} は ${b1.klass}` };
+    },
+  },
+];
+
+export function evaluateBoosts(info: RaceInfo): BoostResult[] {
+  return BOOST_RULES.map((r) => {
+    const { active, detail } = r.evaluate(info);
+    return { id: r.id, label: r.label, active, detail, evidence: r.evidence };
+  });
+}
 
 export function evaluateSigns(info: RaceInfo): SignResult[] {
   return SKIP_RULES.filter((r) => r.enabled).map((r) => {
