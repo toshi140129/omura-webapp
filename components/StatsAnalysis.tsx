@@ -149,8 +149,7 @@ function calcStats(data: RaceRow[]): Stats {
 export default function StatsAnalysis({ data }: { data: RaceRow[] }) {
   const s = calcStats(data);
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">確率分析</h2>
+    <div>
       <div className="grid grid-cols-2 gap-2 text-sm mb-4">
         <Stat label="総日数" value={`${s.total}日`} />
         <Stat label="①成立日" value={`${s.cond1Days}日 (${s.cond1Rate}%)`} />

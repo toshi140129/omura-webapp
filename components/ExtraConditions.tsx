@@ -53,8 +53,7 @@ export default function ExtraConditions({ data }: { data: RaceRow[] }) {
   ];
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">追加条件探索</h2>
+    <div>
 
       <h3 className="text-sm font-bold text-gray-400 mb-2">10R払戻帯別の12R的中率</h3>
       <div className="space-y-1 mb-4">

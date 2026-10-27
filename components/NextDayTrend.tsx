@@ -33,8 +33,7 @@ export default function NextDayTrend({ data }: { data: RaceRow[] }) {
   });
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">同日12Rの1着傾向（11R勝者別）</h2>
+    <div>
       <p className="text-xs text-gray-400 mb-3">
         11Rで各号艇が1着になった日に、同じ日の12Rで1着になりやすい号艇の傾向。
       </p>

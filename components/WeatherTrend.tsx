@@ -186,8 +186,7 @@ export default function WeatherTrend({ data }: { data: RaceRow[] }) {
 
   if (!hasWeather) {
     return (
-      <div className="mb-6 rounded-lg border border-gray-700 p-4">
-        <h2 className="font-bold mb-3 text-lg">気象条件別の1着傾向</h2>
+      <div>
         <div className="text-xs text-gray-400">
           気象データがまだCSVに取り込まれていません。
           バックフィル完了後、再デプロイで反映されます。
@@ -199,8 +198,7 @@ export default function WeatherTrend({ data }: { data: RaceRow[] }) {
   const gridCols = dim === "boat" ? "grid-cols-6" : "grid-cols-6";
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">気象条件別の1着傾向</h2>
+    <div>
       <p className="text-xs text-gray-400 mb-3">
         選択レースの風速・波高・風向別に、1着号艇または1着人気の分布を集計。
       </p>

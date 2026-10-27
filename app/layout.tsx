@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "大村ボートレース 予測システム",
   description: "大村ボートレース場の3連単予測・統計分析システム",
+  appleWebApp: {
+    capable: true,
+    title: "大村予測",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#111827",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

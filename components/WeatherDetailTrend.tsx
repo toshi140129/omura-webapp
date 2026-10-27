@@ -137,8 +137,7 @@ export default function WeatherDetailTrend({ data }: { data: RaceRow[] }) {
   }, [data]);
 
   return (
-    <div className="mb-6 rounded-lg border border-gray-700 p-4">
-      <h2 className="font-bold mb-3 text-lg">気象詳細・潮汐別の12R 1着号艇傾向</h2>
+    <div>
       <p className="text-xs text-gray-400 mb-4">
         気温・水温・安定板・潮位ごとに12R 1着号艇の分布を集計。
       </p>
