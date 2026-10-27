@@ -16,6 +16,7 @@ export type Boat = {
   waku: string;
   name: string;
   klass: string; // A1/A2/B1/B2
+  branch: string; // 支部（長崎/福岡 など）
   winRate: number | null; // 全国勝率
   localWinRate: number | null; // 当地勝率
   avgST: number | null;
@@ -147,6 +148,9 @@ export function parseRaceList(html: string): {
     const kl = /\b([AB][12])\b/.exec(cellText);
     const a = /<a[^>]*>([\s\S]*?)<\/a>/.exec(tds[2]);
     const name = a ? textOf(a[1]).replace(/\s+/g, "") : "";
+    // 「広島/広島」のように <br> 区切りで 支部/出身地 が1行で出る（登録番号・年齢/体重の行は除く）
+    const branchLine = lines(tds[2]).find((t) => /^[^\s/\d]+\s*\/\s*[^\s/\d]+$/.test(t) && !/歳|kg/.test(t));
+    const branch = branchLine ? branchLine.split("/")[0].trim() : "";
     const fl = lines(tds[3]);
     const st = fl.find((t) => /^\d\.\d{2}$/.test(t));
     const nat = lines(tds[4]).map((t) => num(t)).filter((v): v is number => v !== null);
@@ -155,6 +159,7 @@ export function parseRaceList(html: string): {
       waku,
       name,
       klass: kl ? kl[1] : "",
+      branch,
       winRate: nat[0] ?? null,
       localWinRate: loc[0] ?? null,
       avgST: st ? parseFloat(st) : null,
