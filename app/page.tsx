@@ -12,6 +12,7 @@ import ComboRanking from "@/components/ComboRanking";
 import RealtimeEV from "@/components/RealtimeEV";
 import TodaySigns from "@/components/TodaySigns";
 import VerificationSummary from "@/components/VerificationSummary";
+import FlatBetSimulator from "@/components/FlatBetSimulator";
 import AppShell from "@/components/ui/AppShell";
 import Section from "@/components/ui/Section";
 
@@ -160,6 +161,15 @@ export default async function Home() {
 
   const analysis = (
     <>
+      <Section
+        id="flatbet"
+        title="定額買いの収支シミュレーター"
+        summary="12R 1番人気1点を定額で買い続けた累計収支・年別/月別・最大連敗"
+        defaultOpen
+        accent="yellow"
+      >
+        <FlatBetSimulator />
+      </Section>
       <Section id="stats" title="確率分析" summary="5条件の成立率と組み合わせ別的中率" defaultOpen>
         <StatsAnalysis data={data} />
       </Section>
