@@ -88,6 +88,54 @@ export const SKIP_RULES: SkipRule[] = [
     },
   },
   {
+    id: "other_tilt",
+    label: "1号艇以外にチルト0.5以上の艇がいる",
+    stage: "直前情報",
+    evidence: "該当81日: 的中12%・回収率87%（それ以外 19%・121%、2023〜26年すべて同じ向き）",
+    enabled: true,
+    evaluate: (info) => {
+      const tilts = info.boats.filter((b) => b.tilt !== null).map((b) => ({ waku: b.waku, t: b.tilt as number }));
+      if (tilts.length < 5) {
+        return { status: "pending", detail: "直前情報（チルト）待ち" };
+      }
+      const up = tilts.filter((x) => x.waku !== "1" && x.t >= 0.5);
+      const detail = tilts.map((x) => `${x.waku}号${x.t >= 0 ? "+" : ""}${x.t.toFixed(1)}`).join(" ");
+      return {
+        status: up.length ? "skip" : "ok",
+        detail: up.length ? `${detail}（${up.map((x) => x.waku).join("・")}号艇が0.5以上）` : detail,
+      };
+    },
+  },
+  {
+    id: "boat1_tilt",
+    label: "1号艇のチルトが0.5以上",
+    stage: "直前情報",
+    evidence: "該当17日: 的中1回・回収率31%（日数が少ないので候補扱い）",
+    enabled: true,
+    evaluate: (info) => {
+      const b1 = info.boats.find((b) => b.waku === "1");
+      if (!b1 || b1.tilt === null) {
+        return { status: "pending", detail: "直前情報（チルト）待ち" };
+      }
+      return { status: b1.tilt >= 0.5 ? "skip" : "ok", detail: `1号艇 ${b1.tilt >= 0 ? "+" : ""}${b1.tilt.toFixed(1)}` };
+    },
+  },
+  {
+    id: "start_exhibition",
+    label: "スタート展示の進入が枠なりでない",
+    stage: "直前情報",
+    evidence: "該当17日: 的中1回・回収率35%（日数が少ないので候補扱い）",
+    enabled: true,
+    evaluate: (info) => {
+      const order = info.startExhibition;
+      if (!order || order.length < 5) {
+        return { status: "pending", detail: "直前情報（スタート展示）待ち" };
+      }
+      const wakunari = order.every((w, i) => w === String(i + 1));
+      return { status: wakunari ? "ok" : "skip", detail: order.join("-") + (wakunari ? "（枠なり）" : "（枠なりでない）") };
+    },
+  },
+  {
     // 候補（別スレッド「選手別の的中傾向」で検出。採用は未決定なので画面には出さない）
     id: "local_gap",
     label: "1号艇の当地勝率が全国勝率より0.5以上低い",

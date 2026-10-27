@@ -20,6 +20,7 @@ export type Boat = {
   localWinRate: number | null; // 当地勝率
   avgST: number | null;
   exhibitionTime: number | null; // 展示タイム（直前情報が出るまで null）
+  tilt: number | null; // チルト角（直前情報が出るまで null）
 };
 
 export type Weather = {
@@ -37,6 +38,8 @@ export type RaceInfo = {
   title: string; // 節名
   boats: Boat[];
   weather: Weather | null;
+  /** スタート展示の進入順（コース1から艇番を並べたもの。未発表なら空） */
+  startExhibition: string[];
 };
 
 export function todayJST(): string {
@@ -156,6 +159,7 @@ export function parseRaceList(html: string): {
       localWinRate: loc[0] ?? null,
       avgST: st ? parseFloat(st) : null,
       exhibitionTime: null,
+      tilt: null,
     });
   }
   boats.sort((x, y) => x.waku.localeCompare(y.waku));
@@ -163,19 +167,42 @@ export function parseRaceList(html: string): {
 }
 
 // ---------------------------------------------------------------- 直前情報
+/** スタート展示の進入順（コース1から艇番）。omura_extra_fetch.py の parse_start_table と同じ前提で、
+ *  「スタート展示」を含む table の中の艇番アイコン（table1_boatImage1Number）を順に拾う */
+export function parseStartExhibition(html: string): string[] {
+  const tableRe = /<table[^>]*>([\s\S]*?)<\/table>/g;
+  let m: RegExpExecArray | null;
+  while ((m = tableRe.exec(html)) !== null) {
+    const body = m[1];
+    if (!textOf(body).includes("スタート展示") && !/table1_boatImage1Number/.test(body)) continue;
+    const order: string[] = [];
+    const numRe = /table1_boatImage1Number[^>]*>\s*([1-6])\s*</g;
+    let n: RegExpExecArray | null;
+    while ((n = numRe.exec(body)) !== null) order.push(n[1]);
+    if (order.length >= 5 && order.length <= 6) return order;
+  }
+  return [];
+}
+
 export function parseBeforeInfo(html: string): {
   available: boolean;
   exhibition: Record<string, number>;
+  tilt: Record<string, number>;
+  startExhibition: string[];
   weather: Weather | null;
 } {
-  if (noData(html)) return { available: false, exhibition: {}, weather: null };
+  if (noData(html)) return { available: false, exhibition: {}, tilt: {}, startExhibition: [], weather: null };
   const exhibition: Record<string, number> = {};
+  const tilt: Record<string, number> = {};
   for (const tds of firstRowCells(html)) {
     if (tds.length < 6) continue;
     const waku = (textOf(tds[0]).match(/\d/) ?? [""])[0];
     const t = num(textOf(tds[4]), /\d\.\d{2}/);
     if (waku && t !== null) exhibition[waku] = t;
+    const tl = num(textOf(tds[5]), /-?\d+(?:\.\d+)?/);
+    if (waku && tl !== null) tilt[waku] = tl;
   }
+  const startExhibition = parseStartExhibition(html);
 
   let weather: Weather | null = null;
   // class 名は "weather1" そのもの（"is-weather1" や "weather1_body" は除く）
@@ -201,7 +228,7 @@ export function parseBeforeInfo(html: string): {
     }
   }
   const available = Object.keys(exhibition).length >= 6;
-  return { available, exhibition, weather };
+  return { available, exhibition, tilt, startExhibition, weather };
 }
 
 // ---------------------------------------------------------------- まとめて取得
@@ -216,6 +243,7 @@ export async function fetchRaceInfo(dateISO: string, rno = 12): Promise<RaceInfo
   const boats = list.boats.map((b) => ({
     ...b,
     exhibitionTime: before.exhibition[b.waku] ?? null,
+    tilt: before.tilt[b.waku] ?? null,
   }));
   let weather = before.weather;
   // 12Rの直前情報がまだ無いときは、直近のレースの気象を使う（天気の見送り判定用）
@@ -238,5 +266,6 @@ export async function fetchRaceInfo(dateISO: string, rno = 12): Promise<RaceInfo
     title: list.title,
     boats,
     weather,
+    startExhibition: before.startExhibition,
   };
 }
