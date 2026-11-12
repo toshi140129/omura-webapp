@@ -117,7 +117,7 @@ export default async function Home() {
       <Section
         id="signs"
         title="12R 見送りサイン"
-        summary="出走表と直前情報から、負けやすい日を3条件で判定"
+        summary="出走表と直前情報から、負けやすい日を7つのサインで判定"
         defaultOpen
         accent="yellow"
       >
