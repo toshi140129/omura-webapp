@@ -3,6 +3,7 @@
  * 追加データ分析（2026-10-22、①②成立549日・1万円固定）で、前半(2023-24)と後半(2025-26)の
  * 両方で同じ向きに出た条件だけを有効にしている。条件を足すときは SKIP_RULES に1件追加するだけでよい。
  * 2026-10-27: 「曇り」を追加（1番人気1点・2万定額 322日の検証）。見送りとは別に「追い風サイン」（BOOST_RULES）も返す。
+ * 2026-11-13: evidence は全サイン同じ物差しにそろえた（①②成立563日・12R 3連単1番人気1点・確定オッズ、2023-01〜2026-11-11）。
  */
 import type { RaceInfo } from "./boatrace";
 
@@ -37,7 +38,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "winrate_gap",
     label: "1号艇の勝率が他艇より1.0以上低い",
     stage: "出走表",
-    evidence: "該当94日: 的中37%・回収率75%（それ以外 59%・90%）",
+    evidence: "該当96日: 1番人気的中10.4%・回収率77%（それ以外 16.3%・105%）",
     enabled: true,
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
@@ -56,7 +57,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "exhibition_rank",
     label: "1号艇の展示タイムが4位以下",
     stage: "直前情報",
-    evidence: "該当130日: 的中47%・回収率80%（それ以外 58%・90%）",
+    evidence: "該当134日: 1番人気的中9.7%・回収率62%（それ以外 17.0%・112%）",
     enabled: true,
     evaluate: (info) => {
       const times = info.boats
@@ -76,7 +77,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "rain",
     label: "12Rが雨",
     stage: "直前情報",
-    evidence: "該当66日: 的中42%・回収率66%（それ以外 57%・90%）",
+    evidence: "該当69日: 1番人気的中11.6%・回収率78%（それ以外 15.8%・103%）",
     enabled: true,
     evaluate: (info) => {
       if (!info.weather || !info.weather.weather) {
@@ -92,7 +93,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "cloudy",
     label: "12Rが曇り",
     stage: "直前情報",
-    evidence: "該当101日: 1番人気的中9.9%・回収率63%（晴 20.9%・136%、2023〜26年すべて同じ向き）",
+    evidence: "該当164日: 1番人気的中12.2%・回収率81%（それ以外 16.5%・108%）",
     enabled: true,
     evaluate: (info) => {
       if (!info.weather || !info.weather.weather) {
@@ -107,7 +108,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "other_tilt",
     label: "1号艇以外にチルト0.5以上の艇がいる",
     stage: "直前情報",
-    evidence: "該当81日: 的中12%・回収率87%（それ以外 19%・121%、2023〜26年すべて同じ向き）",
+    evidence: "該当150日: 1番人気的中11.3%・回収率73%（それ以外 16.7%・110%）",
     enabled: true,
     evaluate: (info) => {
       const tilts = info.boats.filter((b) => b.tilt !== null).map((b) => ({ waku: b.waku, t: b.tilt as number }));
@@ -126,7 +127,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "boat1_tilt",
     label: "1号艇のチルトが0.5以上",
     stage: "直前情報",
-    evidence: "該当17日: 的中1回・回収率31%（日数が少ないので候補扱い）",
+    evidence: "該当30日: 1番人気的中10.0%・回収率71%（それ以外 15.6%・102%、日数が少なめ）",
     enabled: true,
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
@@ -140,7 +141,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "start_exhibition",
     label: "スタート展示の進入が枠なりでない",
     stage: "直前情報",
-    evidence: "該当17日: 的中1回・回収率35%（日数が少ないので候補扱い）",
+    evidence: "該当36日: 1番人気的中5.6%・回収率45%（それ以外 15.9%・104%、日数が少なめ）",
     enabled: true,
     evaluate: (info) => {
       const order = info.startExhibition;

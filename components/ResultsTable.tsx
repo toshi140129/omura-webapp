@@ -8,17 +8,13 @@ const PAGE = 30;
 const FILTERS: { key: Filter; label: string }[] = [
   { key: "all", label: "全日" },
   { key: "cond1", label: "①成立日" },
-  { key: "hit", label: "的中日" },
+  { key: "hit", label: "12R 1番人気決着" },
 ];
 
 function judge(row: RaceRow) {
   const cond1 = row.r11.p1 === "1";
-  const cond3 = row.r12.p1 === "1";
-  const r11_23 = [row.r11.p2, row.r11.p3];
-  const r12_23 = [row.r12.p2, row.r12.p3];
-  const cond4 = r11_23.some((b) => r12_23.includes(b));
-  const pay = parseInt(row.r12.pay || "0");
-  const hit = cond1 && cond3 && cond4 && pay > 0 && pay < 4000;
+  // 今の買い方（12R 3連単1番人気1点）で当たった日 = 12R が1番人気で決着した日
+  const hit = row.r12.rank === "1";
   return { cond1, hit };
 }
 
