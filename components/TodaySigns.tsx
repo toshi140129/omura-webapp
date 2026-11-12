@@ -80,7 +80,7 @@ export default function TodaySigns() {
     data.verdict === "skip"
       ? { cls: "bg-red-600 text-white", text: "見送り推奨" }
       : data.verdict === "go"
-        ? { cls: "bg-green-600 text-white", text: "見送り条件なし" }
+        ? { cls: "bg-green-600 text-white", text: "見送りサインなし" }
         : { cls: "bg-gray-700 text-gray-100", text: "判定待ち（直前情報が出たら確定）" };
   const skipCount = data.signs.filter((s) => s.status === "skip").length;
   const boosts = (data.boosts ?? []).filter((b) => b.active);
@@ -177,7 +177,11 @@ export default function TodaySigns() {
       </div>
 
       <p className="mt-2 text-[10px] text-gray-600">
-        更新 {jstTime(data.fetchedAt)}（5分ごとに自動更新）。見送っても回収率は95%前後で、負けを減らす条件です。
+        更新 {jstTime(data.fetchedAt)}（5分ごとに自動更新）。
+      </p>
+      <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
+        ここで見ているのは12Rの見送りサインだけです。①11R 1着=1号艇・②10Rと11Rの着順が不一致の判定は、
+        11R確定後にLINEで届きます。①②が成立し、ここが「見送りサインなし」の日に、12R 3連単の1番人気を1点・定額で買います。
       </p>
     </div>
   );

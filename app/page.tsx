@@ -117,44 +117,11 @@ export default async function Home() {
       <Section
         id="signs"
         title="12R 見送りサイン"
-        summary="出走表と直前情報から、負けやすい日を3条件で判定"
+        summary="出走表と直前情報から、負けやすい日を7つのサインで判定"
         defaultOpen
         accent="yellow"
       >
         <TodaySigns />
-      </Section>
-      <Section
-        id="realtime"
-        title="本日のリアルタイム期待値"
-        summary="11R終了後に自動更新。EV 100%以上は黄色"
-        defaultOpen
-        accent="yellow"
-      >
-        <RealtimeEV />
-      </Section>
-      <Section
-        id="check"
-        title="予測チェック"
-        summary={`最新データ日 ${latest.date} の5条件と買い目`}
-        defaultOpen
-        accent="yellow"
-      >
-        <PredictionCheck data={data} />
-      </Section>
-      <Section
-        id="martingale"
-        title="マーチンゲール計算"
-        summary="次回賭け金を2つの式で比較"
-        defaultOpen
-      >
-        <MartingaleCalc />
-      </Section>
-      <Section
-        id="verification"
-        title="資金配分の検証結果（要約）"
-        summary="2023-01〜2026-10 の収支検証。固定値"
-      >
-        <VerificationSummary />
       </Section>
     </>
   );
@@ -170,7 +137,7 @@ export default async function Home() {
       >
         <FlatBetSimulator />
       </Section>
-      <Section id="stats" title="確率分析" summary="5条件の成立率と組み合わせ別的中率" defaultOpen>
+      <Section id="stats" title="確率分析（旧メイン理論）" summary="旧①〜⑤の成立率と組み合わせ別的中率">
         <StatsAnalysis data={data} />
       </Section>
       <Section id="seasonal" title="季節・時期別分析" summary="季節・月・曜日・節内日数・開催種別">
@@ -191,14 +158,42 @@ export default async function Home() {
       <Section id="weather-detail" title="気象詳細・潮汐別の12R 1着号艇傾向" summary="気温・水温・安定板・潮位別">
         <WeatherDetailTrend data={data} />
       </Section>
-      <Section id="combo" title="条件組合せランキング" summary="人気上位4点買いの条件別回収率">
+      <Section id="combo" title="条件組合せランキング" summary="人気上位4点買い（不採用）の条件別回収率">
         <ComboRanking data={data} />
+      </Section>
+      <Section
+        id="realtime"
+        title="【参考】リアルタイム期待値"
+        summary="2026-04-30で更新停止中。今の買い方とは無関係"
+      >
+        <RealtimeEV />
+      </Section>
+      <Section
+        id="check"
+        title="【参考・不採用】旧メイン理論の予測チェック"
+        summary={`最新データ日 ${latest.date} の旧①〜⑤と40倍未満の買い目`}
+      >
+        <PredictionCheck data={data} />
+      </Section>
+      <Section
+        id="martingale"
+        title="【参考・不採用】マーチンゲール計算"
+        summary="マーチンは不採用（今は定額2万）。旧方式の計算用"
+      >
+        <MartingaleCalc />
+      </Section>
+      <Section
+        id="verification"
+        title="【参考・不採用】資金配分の検証結果"
+        summary="旧メイン理論・マーチンの検証（2023-01〜2026-10-17）。固定値"
+      >
+        <VerificationSummary />
       </Section>
     </>
   );
 
   const history = (
-    <Section id="results" title="過去結果" summary={`${data.length}日分。①成立日・的中日で絞り込み可`} defaultOpen>
+    <Section id="results" title="過去結果" summary={`${data.length}日分。①成立日・12R 1番人気決着の日で絞り込み可`} defaultOpen>
       <ResultsTable data={data} />
     </Section>
   );

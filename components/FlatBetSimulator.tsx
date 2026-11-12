@@ -4,7 +4,7 @@ import { FLAT_BET_LOG, FLAT_BET_RANGE, type FlatBetRow } from "@/lib/flatBetLog"
 
 /**
  * 定額買いの収支シミュレーター。
- * 「①②成立＋見送り3条件クリアの日に 12R 3連単1番人気を1点」を、入力した定額で
+ * 「①②成立＋見送りサイン7つ（lib/skipRules.ts の有効な条件）クリアの日に 12R 3連単1番人気を1点」を、入力した定額で
  * 毎回買った場合の累計収支・年別/月別収支・サマリーを過去ログ（lib/flatBetLog.ts）から即時計算する。
  */
 
@@ -210,8 +210,8 @@ export default function FlatBetSimulator() {
     <div className="space-y-5 text-sm">
       {/* 条件の説明 */}
       <p className="text-xs leading-relaxed text-gray-400">
-        ①11R 1着=1号艇 ②10Rと11Rの3連単が不一致、かつ見送り3条件（1号艇の勝率差≤−1.0・雨・展示タイム4位以下）に
-        当てはまらない日に、12R 3連単の1番人気を1点だけ同じ金額で買い続けた場合の収支です。
+        ①11R 1着=1号艇 ②10Rと11Rの3連単が不一致、かつ「今日」タブの見送りサイン7つ（雨・曇り・1号艇の勝率差≤−1.0・展示タイム4位以下・
+        他艇チルト0.5以上・1号艇チルト0.5以上・進入が枠なりでない）に当てはまらない日に、12R 3連単の1番人気を1点だけ同じ金額で買い続けた場合の収支です。
         対象 {FLAT_BET_RANGE.from}〜{FLAT_BET_RANGE.to}、{FLAT_BET_LOG.length}日。確定オッズ・実払戻で計算。
       </p>
 
