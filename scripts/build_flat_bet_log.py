@@ -77,8 +77,11 @@ for d in sorted(res):
     if e.get("12R_展示枠なり") == "0":
         continue
     o = odds[d]
-    fav = min(o, key=o.get)
     res12 = f'{r["12R_1着"]}-{r["12R_2着"]}-{r["12R_3着"]}'
+    lo = min(o.values())
+    ties = [c for c, v in o.items() if v == lo]
+    # 最低オッズが同じ目が複数あるときは、結果CSVの公式人気（12R_人気=1）で1番人気を決める
+    fav = res12 if (len(ties) > 1 and res12 in ties and r.get("12R_人気") == "1") else ties[0]
     pay = int(r["12R_払戻"]) if res12 == fav and r["12R_払戻"] else 0
     rows.append((d, fav, o[fav], res12, pay))
 
