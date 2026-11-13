@@ -62,6 +62,14 @@ const tickLabel = (v: number) => {
   const s = a >= 10000 ? `${(a / 10000).toLocaleString("ja-JP")}万` : a.toLocaleString("ja-JP");
   return `${v < 0 ? "−" : ""}${s}`;
 };
+/** 的中日は実払戻の倍率を表示する（オッズCSVの値が締切前のもので払戻とずれる日があるため）。ずれた日は * を付ける */
+const oddsLabel = (r: { o: number; pay: number }) => {
+  if (r.pay > 0) {
+    const real = r.pay / 100;
+    return `${real.toFixed(1)}${Math.abs(real - r.o) >= 0.1 ? "*" : ""}`;
+  }
+  return r.o.toFixed(1);
+};
 const pct = (n: number, d: number) => (d === 0 ? "-" : `${((n / d) * 100).toFixed(1)}%`);
 
 function niceStep(range: number, target = 4) {
@@ -381,7 +389,7 @@ export default function FlatBetSimulator() {
                 <tr key={r.d} className={`border-t border-gray-800 ${r.pay > 0 ? "bg-green-900/20" : ""}`}>
                   <td className="px-2 py-1 text-left">{r.d}</td>
                   <td className="py-1">{r.fav}</td>
-                  <td className="py-1">{r.o.toFixed(1)}</td>
+                  <td className="py-1">{oddsLabel(r)}</td>
                   <td className={`py-1 ${r.pay > 0 ? "font-bold text-green-300" : "text-gray-400"}`}>{r.res}</td>
                   <td className={`py-1 text-right ${r.pl >= 0 ? "text-green-300" : "text-red-300"}`}>{yen(r.pl)}</td>
                   <td className="px-2 py-1 text-right">{yen(r.cum)}</td>
@@ -394,7 +402,7 @@ export default function FlatBetSimulator() {
 
       <p className="text-xs leading-relaxed text-gray-500">
         1番人気は締切直前のオッズ画面で確認して買う前提です（確定オッズ基準のため、締切直前の入れ替わりは
-        含みません）。日別ログは scripts/build_flat_bet_log.py で omura-boatrace のCSVから再生成できます。
+        含みません）。的中日のオッズは実際の払戻倍率で、* はオッズ記録と払戻がずれていた日（例: 2026-03-31 は記録4.2倍・払戻3.5倍）。収支は払戻で計算しています。日別ログは scripts/build_flat_bet_log.py で omura-boatrace のCSVから再生成できます。
       </p>
     </div>
   );
@@ -555,7 +563,7 @@ function CumulativeChart({ rows, amount }: { rows: DayResult[]; amount: number }
         >
           <div className="font-bold text-gray-100">{h.d}</div>
           <div className="text-gray-300">
-            {h.fav}（{h.o.toFixed(1)}倍） {h.pay > 0 ? "的中" : "ハズレ"} {yen(h.pl)}
+            {h.fav}（{oddsLabel(h)}倍） {h.pay > 0 ? "的中" : "ハズレ"} {yen(h.pl)}
           </div>
           <div className="text-gray-300">
             累計 <span className="font-bold text-gray-100">{yen(h.cum)}</span>
