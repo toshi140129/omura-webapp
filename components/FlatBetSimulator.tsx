@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { FLAT_BET_LOG, FLAT_BET_RANGE, type FlatBetRow } from "@/lib/flatBetLog";
+import { FLAT_BET_LOG, FLAT_BET_RANGE, FLAT_BET_REFUNDS } from "@/lib/flatBetLog";
+import { dayNumber, simulate, type Bucket, type DayResult } from "@/lib/flatBetStats";
 
 /**
  * 定額買いの収支シミュレーター。
@@ -21,33 +22,6 @@ const C_BAD = "#d03b3b";
 const C_SURFACE = "#111827";
 const C_GRID = "#374151";
 const C_AXIS = "#9ca3af";
-
-type DayResult = FlatBetRow & {
-  bet: number;
-  ret: number;
-  pl: number;
-  cum: number;
-};
-
-type Bucket = { key: string; label: string; days: number; hits: number; pl: number; invested: number };
-
-type Summary = {
-  rows: DayResult[];
-  days: number;
-  hits: number;
-  invested: number;
-  returned: number;
-  total: number;
-  maxDD: number;
-  maxDDFrom: string;
-  maxDDTo: string;
-  maxStreak: number;
-  maxStreakEnd: string;
-  perYear: number;
-  perMonth: number;
-  months: Bucket[];
-  years: Bucket[];
-};
 
 const yen = (v: number) => `${v < 0 ? "−" : v > 0 ? "+" : ""}${Math.abs(v).toLocaleString("ja-JP")}円`;
 const yenPlain = (v: number) => `${v.toLocaleString("ja-JP")}円`;
@@ -80,86 +54,6 @@ function niceStep(range: number, target = 4) {
     if (raw <= m * mag) return m * mag;
   }
   return 10 * mag;
-}
-
-function dayNumber(d: string) {
-  return Math.round(Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10)) / 86400000);
-}
-
-function simulate(log: FlatBetRow[], amount: number): Summary {
-  let cum = 0;
-  let peak = 0;
-  let peakDate = log[0]?.d ?? "";
-  let maxDD = 0;
-  let maxDDFrom = "";
-  let maxDDTo = "";
-  let streak = 0;
-  let maxStreak = 0;
-  let maxStreakEnd = "";
-  let hits = 0;
-  let invested = 0;
-  let returned = 0;
-  const months = new Map<string, Bucket>();
-  const years = new Map<string, Bucket>();
-  const rows: DayResult[] = log.map((r) => {
-    const ret = Math.round((r.pay * amount) / 100);
-    const pl = ret - amount;
-    cum += pl;
-    invested += amount;
-    returned += ret;
-    if (r.pay > 0) {
-      hits++;
-      streak = 0;
-    } else {
-      streak++;
-      if (streak > maxStreak) {
-        maxStreak = streak;
-        maxStreakEnd = r.d;
-      }
-    }
-    if (cum > peak) {
-      peak = cum;
-      peakDate = r.d;
-    }
-    if (cum - peak < maxDD) {
-      maxDD = cum - peak;
-      maxDDFrom = peakDate;
-      maxDDTo = r.d;
-    }
-    const ym = r.d.slice(0, 7);
-    const y = r.d.slice(0, 4);
-    const bump = (m: Map<string, Bucket>, key: string, label: string) => {
-      const b = m.get(key) ?? { key, label, days: 0, hits: 0, pl: 0, invested: 0 };
-      b.days++;
-      b.hits += r.pay > 0 ? 1 : 0;
-      b.pl += pl;
-      b.invested += amount;
-      m.set(key, b);
-    };
-    bump(months, ym, `${+ym.slice(5, 7)}月`);
-    bump(years, y, `${y}年`);
-    return { ...r, bet: amount, ret, pl, cum };
-  });
-  const total = cum;
-  const span = log.length ? dayNumber(log[log.length - 1].d) - dayNumber(log[0].d) + 1 : 0;
-  const perYear = span > 0 ? (total * 365) / span : 0;
-  return {
-    rows,
-    days: log.length,
-    hits,
-    invested,
-    returned,
-    total,
-    maxDD,
-    maxDDFrom,
-    maxDDTo,
-    maxStreak,
-    maxStreakEnd,
-    perYear,
-    perMonth: perYear / 12,
-    months: [...months.values()],
-    years: [...years.values()],
-  };
 }
 
 // 定額は localStorage を正とする小さな外部ストア（使えない環境ではメモリ上の値）
@@ -221,6 +115,8 @@ export default function FlatBetSimulator() {
         ①11R 1着=1号艇 ②10Rと11Rの3連単が不一致、かつ「今日」タブの見送りサイン7つ（雨・曇り・1号艇の勝率差≤−1.0・展示タイム4位以下・
         他艇チルト0.5以上・1号艇チルト0.5以上・進入が枠なりでない）に当てはまらない日に、12R 3連単の1番人気を1点だけ同じ金額で買い続けた場合の収支です。
         対象 {FLAT_BET_RANGE.from}〜{FLAT_BET_RANGE.to}、{FLAT_BET_LOG.length}日。確定オッズ・実払戻で計算。
+        {FLAT_BET_REFUNDS.length > 0 &&
+          `1番人気に入っている艇のフライング等で返還になった${FLAT_BET_REFUNDS.length}日（${FLAT_BET_REFUNDS.join("・")}）は収支0なので回数に入れていません。`}
       </p>
 
       {/* 入力行: 定額と期間 */}
