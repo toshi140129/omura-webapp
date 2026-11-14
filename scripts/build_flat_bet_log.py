@@ -6,6 +6,9 @@
 1号艇展示タイム4位以下 / 1号艇以外にチルト0.5以上 / 1号艇チルト0.5以上 / スタート展示の進入が枠なりでない）
 に該当しない日。lib/skipRules.ts の条件を変えたらここも合わせて再生成する。
 買い目は 12R 3連単の確定オッズ最低（1番人気）1点。払戻は omura_results.csv の実払戻（100円あたり）。
+1番人気に入っている艇がフライング・出遅れ（本番STが F / L）の日は返還（収支0・回数に数えない）なので
+ログから外し、FLAT_BET_REFUNDS に日付だけ残す。
+答え合わせ: omura-boatrace の omura_verify.py が、このログと画面の計算を元データから別に計算した値と突き合わせる。
 
 使い方（omura-boatrace のCSVを指定）:
   python scripts/build_flat_bet_log.py <omura_results.csv> <omura_daily_extra.csv> <omura_12r_odds.csv> <omura_racers.csv>
@@ -34,11 +37,15 @@ for r in read(odds_path):
     if o:
         odds[d] = o
 
-# 12R のチルト（枠ごと）
+# 12R のチルト（枠ごと）と、フライング・出遅れの艇
 tilt = {}
+fl_boats = {}
 for r in read(racers_path):
     if r.get("R") != "12":
         continue
+    st = r.get("本番ST", "")
+    if "F" in st or "L" in st:
+        fl_boats.setdefault(r["日付"], set()).add(r["枠"])
     try:
         t = float(r["チルト"])
     except (ValueError, KeyError):
@@ -52,6 +59,7 @@ def num(s):
         return None
 
 rows = []
+refunds = []
 for d in sorted(res):
     r = res[d]
     if r["11R_1着"] != "1":
@@ -61,7 +69,7 @@ for d in sorted(res):
     e = ext.get(d)
     if not e or d not in odds:
         continue
-    if r.get("12R_天気", "") in ("雨", "曇り"):
+    if r.get("12R_天気", "") in ("雨", "雪", "曇り"):
         continue
     wd = num(e.get("12R_1号艇勝率差"))
     if wd is not None and wd <= -1.0:
@@ -82,6 +90,9 @@ for d in sorted(res):
     ties = [c for c, v in o.items() if v == lo]
     # 最低オッズが同じ目が複数あるときは、結果CSVの公式人気（12R_人気=1）で1番人気を決める
     fav = res12 if (len(ties) > 1 and res12 in ties and r.get("12R_人気") == "1") else ties[0]
+    if set(fav.split("-")) & fl_boats.get(d, set()):
+        refunds.append(d)  # 買い目の艇がF/L → 返還
+        continue
     pay = int(r["12R_払戻"]) if res12 == fav and r["12R_払戻"] else 0
     rows.append((d, fav, o[fav], res12, pay))
 
@@ -89,9 +100,10 @@ hits = sum(1 for x in rows if x[4] > 0)
 lines = [
     "/**",
     " * 定額買いシミュレーター用の日別ログ。scripts/build_flat_bet_log.py で生成（手で編集しない）。",
-    " * 条件: ①②成立かつ見送り7条件（雨・曇り・勝率差≤-1.0・展示4位以下・他艇チルト0.5以上・1号艇チルト0.5以上・進入が枠なりでない）に該当しない日に、",
+    " * 条件: ①②成立かつ見送り7条件（雨/雪・曇り・勝率差≤-1.0・展示4位以下・他艇チルト0.5以上・1号艇チルト0.5以上・進入が枠なりでない）に該当しない日に、",
     " * 12R 3連単の1番人気（確定オッズ最低）を1点買い。pay は的中時の100円あたり払戻（不的中は0）。",
-    f" * 期間 {rows[0][0]}〜{rows[-1][0]}、{len(rows)}日、的中{hits}回。",
+    " * 買い目の艇がF/Lで返還になった日は収支0・回数に数えないので外し、FLAT_BET_REFUNDS に日付だけ置く。",
+    f" * 期間 {rows[0][0]}〜{max(res)}（元データの最終日）、{len(rows)}日、的中{hits}回、返還{len(refunds)}日。",
     " */",
     "export type FlatBetRow = {",
     "  /** 日付 YYYY-MM-DD */ d: string;",
@@ -101,7 +113,10 @@ lines = [
     "  /** 100円あたり払戻（不的中は0） */ pay: number;",
     "};",
     "",
-    f'export const FLAT_BET_RANGE = {{ from: "{rows[0][0]}", to: "{rows[-1][0]}" }};',
+    f'export const FLAT_BET_RANGE = {{ from: "{rows[0][0]}", to: "{max(res)}" }};',
+    "",
+    "/** 返還（買い目の艇がF/L）でログから外した日 */",
+    "export const FLAT_BET_REFUNDS: string[] = [" + ", ".join(f'"{d}"' for d in refunds) + "];",
     "",
     "export const FLAT_BET_LOG: FlatBetRow[] = [",
 ]
@@ -111,4 +126,4 @@ lines.append("];")
 lines.append("")
 with open(out_path, "w", encoding="utf-8") as f:
     f.write("\n".join(lines))
-print(f"{len(rows)}日 的中{hits}回 -> {out_path}")
+print(f"{len(rows)}日 的中{hits}回 返還{len(refunds)}日 -> {out_path}")

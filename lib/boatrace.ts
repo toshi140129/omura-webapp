@@ -232,7 +232,8 @@ export function parseBeforeInfo(html: string): {
       };
     }
   }
-  const available = Object.keys(exhibition).length >= 6;
+  // 欠場があると展示タイムは5艇分しか出ないので、5艇以上で「直前情報あり」とする
+  const available = Object.keys(exhibition).length >= 5;
   return { available, exhibition, tilt, startExhibition, weather };
 }
 

@@ -3,7 +3,9 @@
  * 追加データ分析（2026-10-22、①②成立549日・1万円固定）で、前半(2023-24)と後半(2025-26)の
  * 両方で同じ向きに出た条件だけを有効にしている。条件を足すときは SKIP_RULES に1件追加するだけでよい。
  * 2026-10-27: 「曇り」を追加（1番人気1点・2万定額 322日の検証）。見送りとは別に「追い風サイン」（BOOST_RULES）も返す。
- * 2026-11-13: evidence は全サイン同じ物差しにそろえた（①②成立563日・12R 3連単1番人気1点・確定オッズ、2023-01〜2026-11-11）。
+ * 2026-11-13: evidence は全サイン同じ物差しにそろえた（①②成立日・12R 3連単1番人気1点）。
+ * 2026-11-14: 物差しを「公式人気=1を的中・実払戻・返還日は除く」に直して数え直し（EVIDENCE_UNTIL まで、①②成立556日）。
+ *   追い風サインは「買う日（①②成立・7サインなし）149日」の中での数字。omura-boatrace/omura_verify.py が毎日照合する。
  */
 import type { RaceInfo } from "./boatrace";
 
@@ -31,6 +33,13 @@ export type SkipRule = {
   evaluate: (info: RaceInfo) => { status: SignStatus; detail: string };
 };
 
+/**
+ * evidence（該当日の的中率・回収率）を数えた最終日。omura-boatrace/omura_verify.py が同じ日付までの元データで
+ * 数え直して、文言の数字が合っているかを毎日照合する。数え直したらここも更新する。
+ * 物差し: ①②成立日（返還日は除く）に 12R 3連単1番人気（結果ページの公式人気）を1点買い、実払戻で計算。
+ */
+export const EVIDENCE_UNTIL = "2026-11-13";
+
 const fmt = (v: number | null | undefined, d = 2) => (v === null || v === undefined ? "-" : v.toFixed(d));
 
 export const SKIP_RULES: SkipRule[] = [
@@ -38,7 +47,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "winrate_gap",
     label: "1号艇の勝率が他艇より1.0以上低い",
     stage: "出走表",
-    evidence: "該当96日: 1番人気的中10.4%・回収率77%（それ以外 16.3%・105%）",
+    evidence: "該当96日: 1番人気的中10.4%・回収率77%（それ以外 16.7%・108%）",
     enabled: true,
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
@@ -48,7 +57,8 @@ export const SKIP_RULES: SkipRule[] = [
       }
       const best = Math.max(...others.map((b) => b.winRate as number));
       const bestBoat = others.find((b) => b.winRate === best);
-      const gap = b1.winRate - best;
+      // 6.29−7.29 が −0.9999… にならないよう小数2桁で丸める（勝率は小数2桁）
+      const gap = Math.round((b1.winRate - best) * 100) / 100;
       const detail = `1号艇 ${fmt(b1.winRate)} − 最高 ${fmt(best)}（${bestBoat?.waku}号艇）= ${gap >= 0 ? "+" : ""}${fmt(gap)}`;
       return { status: gap <= -1.0 ? "skip" : "ok", detail };
     },
@@ -57,27 +67,28 @@ export const SKIP_RULES: SkipRule[] = [
     id: "exhibition_rank",
     label: "1号艇の展示タイムが4位以下",
     stage: "直前情報",
-    evidence: "該当134日: 1番人気的中9.7%・回収率62%（それ以外 17.0%・112%）",
+    evidence: "該当132日: 1番人気的中9.8%・回収率62%（それ以外 17.5%・116%）",
     enabled: true,
     evaluate: (info) => {
       const times = info.boats
         .filter((b) => b.exhibitionTime !== null)
         .map((b) => ({ waku: b.waku, t: b.exhibitionTime as number }));
       const b1 = times.find((x) => x.waku === "1");
-      if (times.length < 6 || !b1) {
+      // 欠場で5艇しか展示しない日もあるので、5艇以上そろえば判定する（元データの順位も出走艇の中での順位）
+      if (times.length < 5 || !b1) {
         return { status: "pending", detail: "直前情報（展示タイム）待ち" };
       }
       const rank = 1 + times.filter((x) => x.t < b1.t).length;
       const fastest = times.reduce((a, b) => (b.t < a.t ? b : a));
-      const detail = `1号艇 ${fmt(b1.t)} は6艇中${rank}位（最速 ${fastest.waku}号艇 ${fmt(fastest.t)}）`;
+      const detail = `1号艇 ${fmt(b1.t)} は${times.length}艇中${rank}位（最速 ${fastest.waku}号艇 ${fmt(fastest.t)}）`;
       return { status: rank >= 4 ? "skip" : "ok", detail };
     },
   },
   {
     id: "rain",
-    label: "12Rが雨",
+    label: "12Rが雨（雪も含む）",
     stage: "直前情報",
-    evidence: "該当69日: 1番人気的中11.6%・回収率78%（それ以外 15.8%・103%）",
+    evidence: "該当69日: 1番人気的中11.6%・回収率78%（それ以外 16.2%・107%）",
     enabled: true,
     evaluate: (info) => {
       if (!info.weather || !info.weather.weather) {
@@ -86,14 +97,14 @@ export const SKIP_RULES: SkipRule[] = [
       const w = info.weather;
       const extra = [w.wind ? `風 ${w.wind}m` : "", w.wave ? `波 ${w.wave}cm` : ""].filter(Boolean).join(" / ");
       const detail = `${w.weather}${extra ? `（${extra}）` : ""}${info.beforeInfoAvailable ? "" : " ※前のレース時点"}`;
-      return { status: w.weather.includes("雨") ? "skip" : "ok", detail };
+      return { status: w.weather.includes("雨") || w.weather.includes("雪") ? "skip" : "ok", detail };
     },
   },
   {
     id: "cloudy",
     label: "12Rが曇り",
     stage: "直前情報",
-    evidence: "該当164日: 1番人気的中12.2%・回収率81%（それ以外 16.5%・108%）",
+    evidence: "該当165日: 1番人気的中12.1%・回収率81%（それ以外 17.1%・112%）",
     enabled: true,
     evaluate: (info) => {
       if (!info.weather || !info.weather.weather) {
@@ -108,7 +119,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "other_tilt",
     label: "1号艇以外にチルト0.5以上の艇がいる",
     stage: "直前情報",
-    evidence: "該当150日: 1番人気的中11.3%・回収率73%（それ以外 16.7%・110%）",
+    evidence: "該当148日: 1番人気的中11.5%・回収率74%（それ以外 17.2%・113%）",
     enabled: true,
     evaluate: (info) => {
       const tilts = info.boats.filter((b) => b.tilt !== null).map((b) => ({ waku: b.waku, t: b.tilt as number }));
@@ -127,7 +138,7 @@ export const SKIP_RULES: SkipRule[] = [
     id: "boat1_tilt",
     label: "1号艇のチルトが0.5以上",
     stage: "直前情報",
-    evidence: "該当30日: 1番人気的中10.0%・回収率71%（それ以外 15.6%・102%、日数が少なめ）",
+    evidence: "該当30日: 1番人気的中10.0%・回収率71%（それ以外 16.0%・105%、日数が少なめ）",
     enabled: true,
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
@@ -141,14 +152,15 @@ export const SKIP_RULES: SkipRule[] = [
     id: "start_exhibition",
     label: "スタート展示の進入が枠なりでない",
     stage: "直前情報",
-    evidence: "該当36日: 1番人気的中5.6%・回収率45%（それ以外 15.9%・104%、日数が少なめ）",
+    evidence: "該当35日: 1番人気的中5.7%・回収率46%（それ以外 16.3%・107%、日数が少なめ）",
     enabled: true,
     evaluate: (info) => {
       const order = info.startExhibition;
       if (!order || order.length < 5) {
         return { status: "pending", detail: "直前情報（スタート展示）待ち" };
       }
-      const wakunari = order.every((w, i) => w === String(i + 1));
+      // 欠場がある日は 1-2-4-5-6 のように番号が飛ぶので、「枠番の小さい順に並んでいる」を枠なりとする
+      const wakunari = order.every((w, i) => i === 0 || Number(order[i - 1]) < Number(w));
       return { status: wakunari ? "ok" : "skip", detail: order.join("-") + (wakunari ? "（枠なり）" : "（枠なりでない）") };
     },
   },
@@ -173,7 +185,7 @@ export const SKIP_RULES: SkipRule[] = [
   },
 ];
 
-/** 追い風サイン: 見送りではなく「この日の1号艇は強い」という後押し（2026-10-27 検証、1番人気1点・2万定額） */
+/** 追い風サイン: 見送りではなく「この日の1号艇は強い」という後押し（2026-10-27 検証。数字は買う日の中で数え直したもの） */
 export type BoostResult = {
   id: string;
   label: string;
@@ -186,7 +198,7 @@ export const BOOST_RULES: { id: string; label: string; evidence: string; evaluat
   {
     id: "local_branch",
     label: "1号艇が地元・長崎支部",
-    evidence: "該当55日: 的中23.6%・回収率160%（それ以外 16.1%・103%、前半162%・後半158%）",
+    evidence: "買う日149日のうち該当22日: 1番人気的中36.4%・回収率242%（それ以外 22.8%・146%）",
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
       if (!b1) return { active: false, detail: "出走表が未発表" };
@@ -197,7 +209,7 @@ export const BOOST_RULES: { id: string; label: string; evidence: string; evaluat
   {
     id: "b_class",
     label: "1号艇がB級（見送らない）",
-    evidence: "B1 20日: 的中30%・回収率228%（A1 241日は15%・98%）。的中は低いがオッズが高く、見送ると損",
+    evidence: "買う日149日のうち該当11日: 1番人気的中45.5%・回収率343%（それ以外 23.2%・145%。日数は少なめ、見送らない）",
     evaluate: (info) => {
       const b1 = info.boats.find((b) => b.waku === "1");
       if (!b1) return { active: false, detail: "出走表が未発表" };

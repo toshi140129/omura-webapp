@@ -1,0 +1,56 @@
+name: システムの答え合わせ
+
+# アプリの見送りサイン・定額シミュレーターの数字を、元データから別に計算し直した正解と突き合わせる。
+# 照合の本体は omura-boatrace の omura_verify.py（毎朝の自動確認と同じもの）。ずれがあればこのチェックが失敗する。
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: webapp
+
+      # PR のときは、omura-boatrace に同じ名前のブランチがあればそちらの照合スクリプトを使う（両方を一緒に直すとき用）
+      - name: 照合スクリプトのブランチを決める
+        id: chkref
+        run: |
+          b="${{ github.head_ref }}"
+          if [ -n "$b" ] && git ls-remote --exit-code --heads https://github.com/toshi140129/omura-boatrace.git "$b" >/dev/null; then
+            echo "ref=$b" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=main" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 照合スクリプト（omura-boatrace）
+        uses: actions/checkout@v4
+        with:
+          repository: toshi140129/omura-boatrace
+          ref: ${{ steps.chkref.outputs.ref }}
+          path: checker
+
+      - name: 元データ（omura-boatrace master）
+        uses: actions/checkout@v4
+        with:
+          repository: toshi140129/omura-boatrace
+          ref: master
+          path: data
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 依存パッケージ
+        run: pip install --quiet beautifulsoup4
+
+      - name: 答え合わせ
+        run: python checker/omura_verify.py --data data --webapp webapp --no-sent-log
