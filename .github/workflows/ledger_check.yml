@@ -1,0 +1,27 @@
+name: 帳簿のチェック
+
+# 帳簿タブの集計ルール（返還・結果待ちの扱い、連敗、最大落ち込み）と、
+# boatrace.jp の「結果」「3連単オッズ」ページから組番・払戻・1番人気を正しく読めるかを確かめる。
+on:
+  pull_request:
+    paths:
+      - "lib/ledger.ts"
+      - "lib/raceResult.ts"
+      - "scripts/check_ledger.mjs"
+      - ".github/workflows/ledger_check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 帳簿の集計と boatrace.jp の読み取り
+        run: node --no-warnings scripts/check_ledger.mjs --live
