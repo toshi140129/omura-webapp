@@ -3,6 +3,9 @@ import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { FLAT_BET_LOG, FLAT_BET_RANGE, FLAT_BET_REFUNDS } from "@/lib/flatBetLog";
 import { dayNumber, simulate, type Bucket, type DayResult } from "@/lib/flatBetStats";
 
+/** 最後に買う日（ログは日付順） */
+const LAST_BUY_DAY = FLAT_BET_LOG.length > 0 ? FLAT_BET_LOG[FLAT_BET_LOG.length - 1].d : "";
+
 /**
  * 定額買いの収支シミュレーター。
  * 「①②成立＋見送りサイン7つ（lib/skipRules.ts の有効な条件）クリアの日に 12R 3連単1番人気を1点」を、入力した定額で
@@ -115,6 +118,9 @@ export default function FlatBetSimulator() {
         ①11R 1着=1号艇 ②10Rと11Rの3連単が不一致、かつ「今日」タブの見送りサイン7つ（雨・曇り・1号艇の勝率差≤−1.0・展示タイム4位以下・
         他艇チルト0.5以上・1号艇チルト0.5以上・進入が枠なりでない）に当てはまらない日に、12R 3連単の1番人気を1点だけ同じ金額で買い続けた場合の収支です。
         対象 {FLAT_BET_RANGE.from}〜{FLAT_BET_RANGE.to}、{FLAT_BET_LOG.length}日。確定オッズ・実払戻で計算。
+        {LAST_BUY_DAY && LAST_BUY_DAY < FLAT_BET_RANGE.to &&
+          `最後に買う日だったのは${LAST_BUY_DAY}で、そのあと${FLAT_BET_RANGE.to}までは買う日がありません（グラフはその日で止まって見えます）。`}
+        データは毎朝自動で最新の結果まで作り直しています。
         {FLAT_BET_REFUNDS.length > 0 &&
           `1番人気に入っている艇のフライング等で返還になった${FLAT_BET_REFUNDS.length}日（${FLAT_BET_REFUNDS.join("・")}）は収支0なので回数に入れていません。`}
       </p>

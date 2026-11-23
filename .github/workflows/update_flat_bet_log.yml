@@ -1,0 +1,87 @@
+name: 定額シミュレーターのデータ更新
+
+# 定額シミュレーター（lib/flatBetLog.ts）は画面に同梱しているので、元データ（omura-boatrace master）が
+# 毎朝 08:05 のPCタスクで伸びても、作り直してコミットしないとグラフが止まったままになる。
+# ここで毎朝作り直し、答え合わせ（omura_verify.py）が通ったときだけ master にコミットする。
+# master が更新されると Vercel が自動で本番に出し直す。
+on:
+  schedule:
+    # 日本時間 08:47 と 12:17（GitHub の定時起動は遅れたり飛んだりするので2回）
+    - cron: "47 23 * * *"
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-flat-bet-log
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+          path: webapp
+
+      - name: 元データ（omura-boatrace master）
+        uses: actions/checkout@v4
+        with:
+          repository: toshi140129/omura-boatrace
+          ref: master
+          path: data
+
+      - name: 照合スクリプト（omura-boatrace main）
+        uses: actions/checkout@v4
+        with:
+          repository: toshi140129/omura-boatrace
+          ref: main
+          path: checker
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 依存パッケージ
+        run: pip install --quiet beautifulsoup4
+
+      - name: 日別ログを作り直す
+        run: |
+          python webapp/scripts/build_flat_bet_log.py \
+            data/omura_results.csv data/omura_daily_extra.csv data/omura_12r_odds.csv data/omura_racers.csv
+
+      - name: 変わったか
+        id: diff
+        working-directory: webapp
+        run: |
+          if git diff --quiet -- lib/flatBetLog.ts; then
+            echo "changed=0" >> "$GITHUB_OUTPUT"
+            echo "変更なし（元データが伸びていない）"
+          else
+            echo "changed=1" >> "$GITHUB_OUTPUT"
+            git diff --stat -- lib/flatBetLog.ts
+          fi
+
+      # 作り直したログが元データから別に計算した正解と合わなければ、ここで止めてコミットしない
+      - name: 答え合わせ
+        if: steps.diff.outputs.changed == '1'
+        run: python checker/omura_verify.py --data data --webapp webapp --no-sent-log
+
+      - name: コミットして master に push
+        if: steps.diff.outputs.changed == '1'
+        working-directory: webapp
+        run: |
+          to=$(grep -o 'to: "[0-9-]*"' lib/flatBetLog.ts | grep -o '[0-9-]\{10\}')
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/flatBetLog.ts
+          git commit -m "定額シミュレーター: データを ${to} まで更新（自動）"
+          for i in 1 2 3; do
+            git pull --rebase origin master && git push origin HEAD:master && exit 0
+            sleep $((i * 10))
+          done
+          exit 1
