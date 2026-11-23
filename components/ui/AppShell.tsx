@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 
-export type TabKey = "today" | "analysis" | "history";
+export type TabKey = "today" | "analysis" | "history" | "ledger";
 
 const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: "today", label: "今日", icon: "⚡" },
   { key: "analysis", label: "分析", icon: "📊" },
   { key: "history", label: "履歴", icon: "📋" },
+  { key: "ledger", label: "帳簿", icon: "📒" },
 ];
 
 const STORAGE_KEY = "omura.tab";
@@ -39,6 +40,7 @@ type Props = {
   today: ReactNode;
   analysis: ReactNode;
   history: ReactNode;
+  ledger: ReactNode;
 };
 
 export default function AppShell({
@@ -47,6 +49,7 @@ export default function AppShell({
   today,
   analysis,
   history,
+  ledger,
 }: Props) {
   const tab = useSyncExternalStore(subscribe, readTab, getServerTab);
   const [showTop, setShowTop] = useState(false);
@@ -69,7 +72,7 @@ export default function AppShell({
     window.scrollTo({ top: 0 });
   };
 
-  const panes: Record<TabKey, ReactNode> = { today, analysis, history };
+  const panes: Record<TabKey, ReactNode> = { today, analysis, history, ledger };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -118,7 +121,7 @@ export default function AppShell({
 
       {/* スマホは親指で届く下タブ */}
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-gray-800 bg-gray-900/95 backdrop-blur pb-[env(safe-area-inset-bottom)] sm:hidden">
-        <div className="mx-auto grid max-w-2xl grid-cols-3">
+        <div className="mx-auto grid max-w-2xl grid-cols-4">
           {TABS.map((t) => {
             const active = tab === t.key;
             return (

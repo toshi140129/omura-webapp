@@ -13,6 +13,7 @@ import RealtimeEV from "@/components/RealtimeEV";
 import TodaySigns from "@/components/TodaySigns";
 import VerificationSummary from "@/components/VerificationSummary";
 import FlatBetSimulator from "@/components/FlatBetSimulator";
+import Ledger from "@/components/Ledger";
 import AppShell from "@/components/ui/AppShell";
 import Section from "@/components/ui/Section";
 
@@ -198,6 +199,18 @@ export default async function Home() {
     </Section>
   );
 
+  const ledger = (
+    <Section
+      id="ledger"
+      title="実戦の帳簿"
+      summary="実際に買った記録。累計収支・連敗・的中率。合言葉で鍵つき"
+      defaultOpen
+      accent="yellow"
+    >
+      <Ledger />
+    </Section>
+  );
+
   return (
     <AppShell
       lastDate={latest.date}
@@ -205,6 +218,7 @@ export default async function Home() {
       today={today}
       analysis={analysis}
       history={history}
+      ledger={ledger}
     />
   );
 }
